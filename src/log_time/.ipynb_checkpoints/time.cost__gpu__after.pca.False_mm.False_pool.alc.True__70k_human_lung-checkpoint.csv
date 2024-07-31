@@ -1,0 +1,12 @@
+step,time,time_cost
+start,0.0,0.0
+load_data,0.606,0.606
+data_to_gpu,1.031,0.425
+qc,1.293,0.262
+normalize,1.297,0.004
+hvg,1.544,0.247
+pca,1.951,0.407
+harmony,4.068,2.117
+neighbors,4.337,0.268
+umap,4.576,0.239
+leiden,11.431,6.855

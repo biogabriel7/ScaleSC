@@ -1,0 +1,33 @@
+gpu__after.pca.False_mm.True_pool.alc.False__1.3M_mouse_brain
+STEP load_data: 	 time cost 	 97.3436803817749
+STEP data_to_gpu: 	 time cost 	 10.193942785263062
+Traceback (most recent call last):
+  File "/mnt/depts/dept04/compbio/projects/scaleSC/rapids/gpu_demo.py", line 89, in <module>
+    rsc.pp.calculate_qc_metrics(adata, qc_vars=["MT"])
+  File "/edgehpc/dept/compbio/users/whu1/envs/gpu_scanpy/lib/python3.9/site-packages/rapids_singlecell/preprocessing/_simple.py", line 73, in calculate_qc_metrics
+    _check_gpu_X(X)
+  File "/edgehpc/dept/compbio/users/whu1/envs/gpu_scanpy/lib/python3.9/site-packages/rapids_singlecell/preprocessing/_utils.py", line 92, in _check_gpu_X
+    if X.has_canonical_format or not require_cf:
+  File "/edgehpc/dept/compbio/users/whu1/envs/gpu_scanpy/lib/python3.9/site-packages/cupyx/scipy/sparse/_compressed.py", line 676, in __get_has_canonical_format
+    self._has_canonical_format = bool(is_canonical.all())
+  File "cupy/_core/core.pyx", line 1169, in cupy._core.core._ndarray_base.all
+  File "cupy/_core/core.pyx", line 1171, in cupy._core.core._ndarray_base.all
+  File "cupy/_core/_routines_logic.pyx", line 8, in cupy._core._routines_logic._ndarray_all
+  File "cupy/_core/_reduction.pyx", line 618, in cupy._core._reduction._SimpleReductionKernel.__call__
+  File "cupy/_core/_reduction.pyx", line 370, in cupy._core._reduction._AbstractReductionKernel._call
+  File "cupy/_core/_cub_reduction.pyx", line 689, in cupy._core._cub_reduction._try_to_call_cub_reduction
+  File "cupy/_core/_cub_reduction.pyx", line 526, in cupy._core._cub_reduction._launch_cub
+  File "cupy/_core/_cub_reduction.pyx", line 461, in cupy._core._cub_reduction._cub_two_pass_launch
+  File "cupy/_util.pyx", line 64, in cupy._util.memoize.decorator.ret
+  File "cupy/_core/_cub_reduction.pyx", line 240, in cupy._core._cub_reduction._SimpleCubReductionKernel_get_cached_function
+  File "cupy/_core/_cub_reduction.pyx", line 223, in cupy._core._cub_reduction._create_cub_reduction_function
+  File "cupy/_core/core.pyx", line 2254, in cupy._core.core.compile_with_cache
+  File "/edgehpc/dept/compbio/users/whu1/envs/gpu_scanpy/lib/python3.9/site-packages/cupy/cuda/compiler.py", line 484, in _compile_module_with_cache
+    return _compile_with_cache_cuda(
+  File "/edgehpc/dept/compbio/users/whu1/envs/gpu_scanpy/lib/python3.9/site-packages/cupy/cuda/compiler.py", line 553, in _compile_with_cache_cuda
+    mod.load(cubin)
+  File "cupy/cuda/function.pyx", line 263, in cupy.cuda.function.Module.load
+  File "cupy/cuda/function.pyx", line 265, in cupy.cuda.function.Module.load
+  File "cupy_backends/cuda/api/driver.pyx", line 226, in cupy_backends.cuda.api.driver.moduleLoadData
+  File "cupy_backends/cuda/api/driver.pyx", line 63, in cupy_backends.cuda.api.driver.check_status
+cupy_backends.cuda.api.driver.CUDADriverError: CUDA_ERROR_ILLEGAL_ADDRESS: an illegal memory access was encountered

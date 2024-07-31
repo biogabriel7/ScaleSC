@@ -1,0 +1,21 @@
+gpu__after.pca.True_mm.False_pool.alc.False__1.3M_mouse_brain
+STEP load_data: 	 time cost 	 97.08077716827393
+STEP qc: 	 time cost 	 156.88716959953308
+STEP normalize: 	 time cost 	 17.051295280456543
+STEP hvg: 	 time cost 	 147.64114999771118
+STEP pca: 	 time cost 	 185.68260526657104
+STEP data_to_gpu: 	 time cost 	 1.6120083332061768
+Traceback (most recent call last):
+  File "/mnt/depts/dept04/compbio/projects/scaleSC/rapids/gpu_demo.py", line 108, in <module>
+    rsc.pp.harmony_integrate(adata, key="sampleID", basis='X_pca', adjusted_basis='X_pca_harmony')
+  File "/edgehpc/dept/compbio/users/whu1/envs/gpu_scanpy/lib/python3.9/site-packages/rapids_singlecell/preprocessing/_harmony_integrate.py", line 61, in harmony_integrate
+    harmony_out = _harmonypy_gpu.run_harmony(X, adata.obs, key, dtype=dtype, **kwargs)
+  File "/edgehpc/dept/compbio/users/whu1/envs/gpu_scanpy/lib/python3.9/site-packages/rapids_singlecell/preprocessing/_harmonypy_gpu.py", line 93, in run_harmony
+    phi = pd.get_dummies(meta_data[vars_use]).to_numpy().T
+  File "/edgehpc/dept/compbio/users/whu1/envs/gpu_scanpy/lib/python3.9/site-packages/pandas/core/frame.py", line 3813, in __getitem__
+    indexer = self.columns._get_indexer_strict(key, "columns")[1]
+  File "/edgehpc/dept/compbio/users/whu1/envs/gpu_scanpy/lib/python3.9/site-packages/pandas/core/indexes/base.py", line 6070, in _get_indexer_strict
+    self._raise_if_missing(keyarr, indexer, axis_name)
+  File "/edgehpc/dept/compbio/users/whu1/envs/gpu_scanpy/lib/python3.9/site-packages/pandas/core/indexes/base.py", line 6130, in _raise_if_missing
+    raise KeyError(f"None of [{key}] are in the [{axis_name}]")
+KeyError: "None of [Index(['sampleID'], dtype='object')] are in the [columns]"
