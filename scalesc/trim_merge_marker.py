@@ -16,11 +16,12 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import confusion_matrix
 from scipy import sparse as sparse_cpu
 from cupyx.scipy import sparse as sparse_gpu
+from kernels import *
+import util
 import itertools
 import time
 import json
 import cupy as cp
-import cudf
 # from xgboost import XGBClassifier
 # import random
 # from sklearn.model_selection import train_test_split
@@ -103,29 +104,109 @@ def timer(func):
 #     df_median.sort_index(inplace=True)
 #     return df_median
 
-from sklearn.utils.sparsefuncs import csc_median_axis_0
+
 @timer
-def calculate_median_sparse(adata, cluster_header):
+def calculate_median_sparse_csc_median(adata, cluster_header):
     clusters = adata.obs[cluster_header].unique().tolist()
     df_median = pd.DataFrame(0.0, index=clusters, columns=adata.var_names.copy())
-    if sparse_cpu.issparse(adata.X):
-        x_cuda = X_to_GPU(adata.X)
-    else:
-        raise Exception("adata.X should be a sparse matrix to save device memory")
+    # transfer to gpu 
     for cluster in clusters:
-        x_tmp = x_cuda[adata.obs[cluster_header]==cluster]
-        gene_exp_count = x_tmp.sign().sum(axis=0)
-        gids = (gene_exp_count >= (x_tmp.shape[0]*0.5))[0].get()
-        x_tmp = x_tmp[:, gids].get()
+        x_tmp = adata.X[adata.obs[cluster_header]==cluster]
         genes_median = csc_median_axis_0(x_tmp.tocsc())
-        cols = df_median.columns[gids]
-        df_median.loc[cluster, cols] = genes_median
+        df_median.loc[cluster] = genes_median
     df_median.sort_index(inplace=True)
-    del(x_cuda)
     return df_median
 
 
-def X_to_GPU(X, warning: str = "X"):
+from sklearn.utils.sparsefuncs import csc_median_axis_0
+from cupy import _core
+from cupy.cuda import device
+from cupy.cuda import runtime
+
+
+# @timer
+# def calculate_median_sparse(adata, cluster_header):
+#     clusters = adata.obs[cluster_header].unique().tolist()
+#     df_median = pd.DataFrame(0.0, index=clusters, columns=adata.var_names.copy())
+#     if sparse_cpu.issparse(adata.X):
+#         # x_cuda = X_to_GPU(adata.X)
+#         x_cuda = adata.X
+#     else:   
+#         raise Exception("adata.X should be a sparse matrix to save device memory")
+#     # illegal memeory access is due to the size of sparse X limited by int32
+#     for cluster in clusters:
+#         x_tmp = x_cuda[adata.obs[cluster_header]==cluster]
+#         x_tmp = X_to_GPU(x_tmp)
+#         # gene_exp_count = x_tmp.sign().sum(axis=0)
+#         gene_exp_count = cp.zeros(x_tmp.shape[1], dtype=cp.float32)
+#         sum_sign_elementwise_kernel(x_tmp.data, x_tmp.indices, gene_exp_count)
+#         gids = (gene_exp_count >= (x_tmp.shape[0]*0.5)).get()
+#         x_tmp = x_tmp[:, gids].get()
+#         genes_median = csc_median_axis_0(x_tmp.tocsc())
+#         cols = df_median.columns[gids]
+#         df_median.loc[cluster, cols] = genes_median
+#     df_median.sort_index(inplace=True)
+#     del(x_cuda)
+#     return df_median
+
+
+@timer
+def calculate_median_sparse_fast_gpu(adata, cluster_header):
+    clusters = adata.obs[cluster_header].unique().tolist()
+    df_median = pd.DataFrame(0.0, index=clusters, columns=adata.var_names.copy())
+    # transfer to gpu 
+    data = cp.asarray(adata.X.data, dtype=np.float32)
+    indptr = cp.asarray(adata.X.indptr, dtype=np.int64)
+    indices = cp.asarray(adata.X.indices, dtype=np.int32)
+    # illegal memeory access is due to the size of sparse X limited by int32
+    for cluster in clusters:
+        idx = cp.asarray(np.argwhere(adata.obs[cluster_header] == cluster)).reshape(-1).astype(np.int64)
+        Bx, Bj, Bp, Bi = util.csr_row_index(data, indices, indptr, idx)
+        gene_exp_count = cp.zeros(adata.shape[1], dtype=cp.float32)
+        sum_sign_elementwise_kernel(Bx, Bj, gene_exp_count)
+        gind = gene_exp_count >= (idx.shape[0]*0.5)
+        gids = cp.where(gind)[0].astype(cp.int32)
+        csc = util.csr_col_index(Bx, Bj, Bi, gids, (idx.shape[0], adata.shape[1])).tocsc()
+        genes_median = csc_median_axis_0(csc)
+        df_median.loc[cluster] = genes_median
+    df_median.sort_index(inplace=True)
+    return df_median
+
+
+# def get_safe_batch_size(adata):
+#     n, m = adata.shape
+#     return int((2**31-1) / n * 5)
+
+# @timer
+# def calculate_median_sparse_in_batch(adata, cluster_header):
+#     batch_size = get_safe_batch_size(adata)
+#     clusters = adata.obs[cluster_header].unique().tolist()
+#     df_median = pd.DataFrame(0.0, index=clusters, columns=adata.var_names.copy())
+#     x = adata.X
+#     x_batches = []
+#     for i in range(0, x.shape[1], batch_size):
+#         x_batches.append(x[:, i: i+batch_size])
+#     # illegal memeory access is due to the size of sparse X limited by int32
+#     for cluster in clusters:
+#         start_col = 0
+#         for x_batch in x_batches:
+#             x_tmp = X_to_GPU(x_batch)
+#             x_tmp = x_tmp[adata.obs[cluster_header]==cluster]
+#             # gene_exp_count = x_tmp.sign().sum(axis=0)
+#             gene_exp_count = cp.zeros(x_tmp.shape[1], dtype=cp.float32)
+#             sum_sign_elementwise_kernel(x_tmp.data, x_tmp.indices, gene_exp_count)
+#             gids = (gene_exp_count >= (x_tmp.shape[0]*0.5)).get()
+#             x_tmp = x_tmp.tocsc()[:, gids].get()
+#             genes_median = csc_median_axis_0(x_tmp)
+#             cols = df_median.columns[start_col: start_col+x_batch.shape[1]][gids]
+#             df_median.loc[cluster, cols] = genes_median
+#             start_col += x_batch.shape[1]
+#     df_median.sort_index(inplace=True)
+#     del(x)
+#     return df_median
+
+
+def X_to_GPU(X):
     """
     Transfers matrices and arrays to the GPU
     X
@@ -139,10 +220,6 @@ def X_to_GPU(X, warning: str = "X"):
         X = sparse_gpu.csc_matrix(X)
     elif isinstance(X, np.ndarray):
         X = cp.array(X)
-    else:
-        warnings.warn(
-            f"{warning} not supported for GPU conversion returning {warning}", Warning
-        )
     return X
 
 # =======================================================================================================================
@@ -251,7 +328,6 @@ def find_cluster_pairs_to_merge(adata, x, colname, cluster, markers):
         if cluster2==cluster: continue
         merge = True
         for gene in markers:
-            print('gene:', gene, 'cluster:', cluster)
             x_gene = x[adata.obs[colname]==cluster, adata.var_names==gene]
             # merge_cutoff = np.mean(adata[adata.obs[colname]==cluster, gene].X) - stds(adata[adata.obs[colname]==cluster, gene].X)
             merge_cutoff = cp.mean(x_gene) - stds(x_gene)
@@ -309,13 +385,22 @@ def adata_cluster_merge(adata, subctype_col):
     pairs_left_low = []
     pairs_left_high = []
     start_find_cluster = time.time()
-    x = X_to_GPU(adata.X)
+    
+    # combine all markers and subset it by markers
+    markers = []
+    for key in dict_markers:
+        for marker in dict_markers[key]:
+            if marker not in markers:
+                markers.append(marker)
+    adata_subset = adata[:, markers]
+    x = X_to_GPU(adata_subset.X)
+
     for cluster in low_acc_clusters:
-        tmp_pairs = find_cluster_pairs_to_merge(adata, x, subctype_col, cluster, dict_markers[cluster])
+        tmp_pairs = find_cluster_pairs_to_merge(adata_subset, x, subctype_col, cluster, dict_markers[cluster])
         pairs_left_low.extend(tmp_pairs)
         
     for cluster in high_acc_clusters:
-        tmp_pairs = find_cluster_pairs_to_merge(adata, x, subctype_col, cluster, dict_markers[cluster])
+        tmp_pairs = find_cluster_pairs_to_merge(adata_subset, x, subctype_col, cluster, dict_markers[cluster])
         pairs_left_high.extend(tmp_pairs)
     
     print('find cluster:', time.time() - start_find_cluster)
@@ -535,8 +620,11 @@ def myNSForest(adata, cluster_header, cluster_list=None, medians_header=None,
         # https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/sparsefuncs.py#L441
         
         start_time = time.time()
-        cluster_medians = calculate_median_sparse(adata, cluster_header)
-        cluster_medians.to_csv('cluster_median1.csv', index=None)
+        # cluster_medians = calculate_median_sparse(adata, cluster_header)
+        # cluster_medians = calculate_median_sparse_in_batch(adata, cluster_header)
+        cluster_medians = calculate_median_sparse_fast_gpu(adata, cluster_header)
+        # cluster_medians = calculate_median_sparse_csc_median(adata, cluster_header)
+        # cluster_medians.to_csv('cluster_median1.csv', index=None)
         ## get dataframes for X and cluster in a column
         # if isinstance(adata.X, np.ndarray):
         #     df_X = pd.DataFrame(adata.X, index=adata.obs_names, columns=adata.var_names) #cell-by-gene

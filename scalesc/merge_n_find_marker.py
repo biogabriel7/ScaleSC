@@ -18,7 +18,7 @@ adata = sc.read_h5ad(fname)
 # adata = adata[:1000].copy()
 print(adata.shape)
 cluster_col = dict_cluster_col[fname]
-
+print(cluster_col)
 cluster_col_after_merge = adata_cluster_merge(adata, cluster_col)
 sc.pl.umap(adata, color=[cluster_col, cluster_col_after_merge], save=f'_{cluster_col}_before.vs.after_merge.png')
 

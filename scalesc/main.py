@@ -4,7 +4,7 @@ import numpy as np
 import scanpy as sc
 import rapids_singlecell as rsc
 import util
-from kernels import seurat_v3_elementwise_kernel
+from kernels import *
 from time import time 
 import logging
 
@@ -113,7 +113,7 @@ def main(data_dir,                  # data dir containing multiple .h5ad files
     _sum_x_sq = cp.zeros([M], dtype=cp.float64)
     for d in reader.batchify(axis='cell'):
         X_batch = d.X
-        x_sum, x_sq_sum = util._get_mean_var(X_batch, axis=0)
+        x_sum, x_sq_sum = util.get_mean_var(X_batch, axis=0)
         _sum_x += x_sum
         _sum_x_sq += x_sq_sum
     mean = _sum_x / N
@@ -167,7 +167,7 @@ def main(data_dir,                  # data dir containing multiple .h5ad files
     """
     STEP = 'Norm & PCA'
     log(f'{STEP}:\tstart', verbose=verbose)
-    start_norm_pca = 0
+    start_norm_pca = time.time()
     cov = cp.zeros((n_top_genes, n_top_genes), dtype=cp.float64)
     s = cp.zeros((1, n_top_genes), dtype=cp.float64)
     for i, d in enumerate(reader.batchify(axis='cell')):  # the first loop is used to calculate mean and X.TX

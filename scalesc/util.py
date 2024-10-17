@@ -5,18 +5,17 @@ import glob
 import time 
 import scipy
 import math
-import h5py
 import warnings
 import cupy as cp
 import numpy as np
-import pandas as pd
+import kernels
 import rapids_singlecell as rsc
 import scanpy as sc
 import anndata as ad
 import scipy.sparse
 from cupyx.scipy.sparse import issparse, isspmatrix_csc, isspmatrix_csr, spmatrix
 # import harmonypy_gpu
-from test_harmony import harmonypy_gpu
+import harmonypy_gpu
 # comment when debug
 warnings.filterwarnings('ignore', 'Expected ')
 warnings.simplefilter('ignore')
@@ -402,13 +401,12 @@ def _mean_var_major(X, major, minor):
         Mean and variance kernels for csr_matrix along the major axis
         Notes: not used for now
     """
-    from kernels import _get_mean_var_major
     # from _kernels._mean_var_kernel import _get_mean_var_major
     mean = cp.zeros(major, dtype=cp.float64)
     var = cp.zeros(major, dtype=cp.float64)
     block = (64,)
     grid = (major,)
-    get_mean_var_major = _get_mean_var_major(X.data.dtype)
+    get_mean_var_major = kernels.get_mean_var_major(X.data.dtype)
     get_mean_var_major(
         grid, block, (X.indptr, X.indices, X.data, mean, var, major, minor)
     )
@@ -424,13 +422,12 @@ def _mean_var_minor(X, major, minor):
         Mean and variance kernels for csr_matrix along the minor axis
         Notes:  modified so that it returns sum(x) and sq_sum(x) instead of mean and variance
     """
-    from kernels import _get_mean_var_minor
     # from _kernels._mean_var_kernel import _get_mean_var_minor
     sums = cp.zeros(minor, dtype=cp.float64)
     sq_sums = cp.zeros(minor, dtype=cp.float64)
     block = (32,)
     grid = (int(math.ceil(X.nnz / block[0])),)
-    get_mean_var_minor = _get_mean_var_minor(X.data.dtype)
+    get_mean_var_minor = kernels.get_mean_var_minor(X.data.dtype)
     get_mean_var_minor(grid, block, (X.indices, X.data, sums, sq_sums, major, X.nnz))
     # var = (var - mean**2) * (major / (major - 1)) # rapids use N-1 to scale
     return sums, sq_sums
@@ -440,10 +437,9 @@ def _mean_var_dense(X, axis):
     """
         Mean and variance kernels for dense matrix
     """
-    from kernels import mean_sum, sq_sum
     # from _kernels._mean_var_kernel import mean_sum, sq_sum
-    var = sq_sum(X, axis=axis)
-    mean = mean_sum(X, axis=axis)
+    var = kernels.sq_sum(X, axis=axis)
+    mean = kernels.mean_sum(X, axis=axis)
     mean = mean / X.shape[axis]
     var = var / X.shape[axis]
     var -= cp.power(mean, 2)
@@ -451,7 +447,7 @@ def _mean_var_dense(X, axis):
     return mean, var
 
 
-def _get_mean_var(X, axis=0):
+def get_mean_var(X, axis=0):
     """
         Calculating mean and variance of a given matrix based on customized kernels
         Notes: no such methods implemented yet for csr_matrix
@@ -480,7 +476,7 @@ def _get_mean_var(X, axis=0):
     return mean, var
 
 
-def _check_nonnegative_integers(X):
+def check_nonnegative_integers(X):
     """
         Check if X is a nonnegative integer matrix
         Notes:  check values of data to ensure it is count data
@@ -522,6 +518,50 @@ def correct_leiden(adata):
     df_tmp = adata.obs.leiden.value_counts()
     old2new = {df_tmp.index[i]:str(i) for i in range(df_tmp.shape[0])}
     adata.obs['leiden'] = adata.obs['leiden'].astype(str).apply(lambda x: old2new[x])
+
+
+def find_indices(A, indptr, out_rows):
+    find_indices_kernel = kernels.get_find_indices()
+    N = A.size
+    M = indptr.size
+    threads_per_block = 512
+    blocks = (N + threads_per_block - 1) // threads_per_block
+    find_indices_kernel((blocks,), (threads_per_block,), (A, indptr, out_rows, N, M))
+
+
+def csr_indptr_to_coo_rows(nnz, Bp):
+    out_rows = cp.empty(nnz, dtype=np.int32)
+    find_indices(cp.arange(nnz), Bp, out_rows)
+    return out_rows
+
+
+def csr_row_index(Ax, Aj, Ap, rows):
+    """Populate indices and data arrays from the given row index
+    Args:
+        Ax (cupy.ndarray): data array from input sparse matrix
+        Aj (cupy.ndarray): indices array from input sparse matrix
+        Ap (cupy.ndarray): indptr array from input sparse matrix
+        rows (cupy.ndarray): index array of rows to populate
+    Returns:
+        Bx (cupy.ndarray): data array of output sparse matrix
+        Bj (cupy.ndarray): indices array of output sparse matrix
+        Bp (cupy.ndarray): indptr array for output sparse matrix
+    """
+    row_nnz = cp.diff(Ap)
+    Bp = cp.empty(rows.size + 1, dtype=np.int64)
+    Bp[0] = 0
+    cp.cumsum(row_nnz[rows], out=Bp[1:])
+    nnz = int(Bp[-1])
+    out_rows = csr_indptr_to_coo_rows(nnz, Bp)
+    Bj, Bx = kernels.csr_row_index_kernel(out_rows, rows, Ap, Aj, Ax, Bp)
+    return Bx, Bj, Bp, out_rows
+
+
+def csr_col_index(Ax, Aj, Ai, cols, shape):
+    col_ind  = cp.empty_like(Aj, dtype=cp.bool_)
+    kernels.check_in_cols_kernel(Aj, cols.size, cols, col_ind)
+    coo = scipy.sparse.coo_matrix((Ax[col_ind].get(), (Ai[col_ind].get(), Aj[col_ind].get())), shape=shape)
+    return coo
 
 
 if __name__ == '__main__':
