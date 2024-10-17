@@ -167,7 +167,7 @@ def main(data_dir,                  # data dir containing multiple .h5ad files
     """
     STEP = 'Norm & PCA'
     log(f'{STEP}:\tstart', verbose=verbose)
-    start_norm_pca = time.time()
+    start_norm_pca = time()
     cov = cp.zeros((n_top_genes, n_top_genes), dtype=cp.float64)
     s = cp.zeros((1, n_top_genes), dtype=cp.float64)
     for i, d in enumerate(reader.batchify(axis='cell')):  # the first loop is used to calculate mean and X.TX
