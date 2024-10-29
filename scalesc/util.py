@@ -50,6 +50,7 @@ class AnnDataBatchReader():
             self.total_size += size
         self.NUM_GENE_PARTATION = np.ceil(self.total_size / max_gpu_memory_usage)
         self.MAX_GPU_MEM_USAGE = max_gpu_memory_usage
+        self.max_cell_batch = max_cell_batch
         self.preload_on_cpu = preload_on_cpu
         self.preload_on_gpu = preload_on_gpu
         self.anndata = None
@@ -69,7 +70,7 @@ class AnnDataBatchReader():
                 self.gpus = [0]
 
         if preload_on_cpu:  # preload data in chunks on CPU
-            self._preload(max_cell_batch)
+            self._preload()
 
 
     def _batch_criteria(self, criteria, **kwargs):
@@ -119,16 +120,16 @@ class AnnDataBatchReader():
             Notes:  genes filter can be set sequentially, a new filter should be always compatible with the previous filtered data.
         """
         if filter is not None:
+            if self.preload_on_cpu and update:
+                self.update_by_genes_filter(filter)
             if self.genes_filter is not None:
                 assert self.n_gene == len(filter), "current gene filter doens't match the previous one."
-                _genes_filter = np.zeros(self.n_gene_origin, dtype=bool)
+                _genes_filter = np.zeros(len(self.genes_filter), dtype=bool)
                 _genes_filter[np.where(self.genes_filter==1)[0][filter]] = True
                 filter = _genes_filter
             self.n_gene = sum(filter)
             self.n_gene_origin = len(filter)
         self.genes_filter = filter
-        if self.preload_on_cpu and update:
-            self.update_by_genes_filter(filter)
          
     def update_by_cells_filter(self, filter):
         if filter is not None:
@@ -151,7 +152,7 @@ class AnnDataBatchReader():
         assert ext in SUPPORT_EXT, "only .h5ad or .h5 file is supported"
         return SUPPORT_EXT[ext](fname)
 
-    def _preload(self, max_cells):
+    def _preload(self):
         """
             Read files from disk and preload all chunks on GPU if preload_on_gpu set to True, otherwise put on CPU
         """
@@ -172,7 +173,7 @@ class AnnDataBatchReader():
             sample.obs_names_make_unique()
             nc, ng = sample.shape
             size_cpu = self._get_size(sample, unit='G')
-            if current_cells + nc > max_cells and batch:
+            if current_cells + nc > self.max_cell_batch and batch:
                 if len(batch) == 1:
                     d = batch.pop()
                 else:
@@ -233,12 +234,13 @@ class AnnDataBatchReader():
         if axis == 'cell':
             for bid, batch in enumerate(self.batches):
                 t_start = time.time()
-                if not self.preload_on_cpu:
-                    if self.genes_filter is not None: # TODO: can be copy here then delete 'sample' to reduce mem further
-                        batch = batch[:, self.genes_filter]
-                    if self.cells_filter is not None:
-                        batch = batch[self.cells_filter[bid]]
-                    batch = batch.copy()
+                # batch = batch.copy()
+                # if not self.preload_on_cpu:
+                #     if self.genes_filter is not None: # TODO: can be copy here then delete 'sample' to reduce mem further
+                #         batch = batch[:, self.genes_filter]
+                #     if self.cells_filter is not None:
+                #         batch = batch[self.cells_filter[bid]]
+                #     batch = batch.copy()
                 # if self.genes_filter is not None: # TODO: can be copy here then delete 'sample' to reduce mem further
                 #     batch = batch[:, self.genes_filter]
                 # if self.cells_filter is not None:
@@ -257,7 +259,6 @@ class AnnDataBatchReader():
                 # transfer that batch back to CPU
                 t_start = time.time()
                 if not self.preload_on_gpu:
-                    # batch = batch.copy() # make it a copy and transfer to GPU, otherwise OOM on GPU
                     rsc.get.anndata_to_CPU(batch) 
                 t_total += time.time() - t_start
                 del(batch)
@@ -273,35 +274,97 @@ class AnnDataBatchReader():
         """
         axes = ['cell', 'gene']
         assert axis in axes, "axis should be either 'cell' or 'gene'."
-        fnames = list(self.files.keys())
         if axis == 'cell':
+            fnames = list(self.files.keys())
+            anndata = []
             fid = 0
             bid = 0
+            current_cells = 0
+            batch = []
+            batch_total_size = 0
+            # assume can be loaded entirly on CPU right now
             while fid < len(fnames):
-                current_size = 0
-                batch = []
-                while fid < len(fnames) and current_size + self.files[fnames[fid]]['size'] <= self.MAX_GPU_MEM_USAGE:
-                    # sample = sc.read_h5ad(fnames[fid])
-                    sample = self.read(fnames[fid])
-                    sample.var_names_make_unique()
-                    sample.obs_names_make_unique()
+                # print(f'loading {fnames[fid]}')
+                # sample = sc.read_h5ad(fnames[fid])
+                sample = self.read(fnames[fid])
+                sample.var_names_make_unique()
+                sample.obs_names_make_unique()
+                nc, ng = sample.shape
+                size_cpu = self._get_size(sample, unit='G')
+                if current_cells + nc > self.max_cell_batch and batch:
+                    if len(batch) == 1:
+                        d = batch.pop()
+                    else:
+                        d = ad.concat(batch)
+                    anndata.append(sc.AnnData(obs=d.obs, 
+                                            var=d.var,
+                                            uns=d.uns,
+                                            obsm=d.obsm,
+                                            varm=d.varm,))    
                     if self.genes_filter is not None:
-                        sample = sample[:, self.genes_filter].copy()
-                    batch.append(sample)
-                    current_size += self.files[fnames[fid]]['size']
-                    fid += 1
-                batched_data = ad.concat(batch)
+                        d = d[:, self.genes_filter].copy()
+                    if self.cells_filter is not None:
+                        d = d[self.cells_filter[bid]].copy()
+                    check_dtype(d)
+                    rsc.get.anndata_to_GPU(d)            
+                    yield d
+                    del(d)
+                    batch = []
+                    batch_total_size = 0
+                    current_cells = 0
+                    bid += 1
+                batch.append(sample)
+                batch_total_size += size_cpu
+                current_cells += nc
+                fid += 1
+            if batch:
+                if len(batch) == 1:
+                    d = batch.pop()
+                else:
+                    d = ad.concat(batch)
+                anndata.append(sc.AnnData(obs=d.obs,
+                        var=d.var,
+                        uns=d.uns,
+                        obsm=d.obsm,
+                        varm=d.varm,))   
+                if self.genes_filter is not None:
+                    d = d[:, self.genes_filter].copy()
                 if self.cells_filter is not None:
-                    batched_data = batched_data[self.cells_filter[bid]].copy()
-                batch = []      
-                current_size = 0 
+                    d = d[self.cells_filter[bid]].copy()
+                check_dtype(d)
+                rsc.get.anndata_to_GPU(d)
+                yield d
                 bid += 1
-                # gc()
-                check_dtype(batched_data)
-                rsc.get.anndata_to_GPU(batched_data)
-                yield batched_data
-                del(batched_data)
-                # gc()
+                batch = []
+            self.anndata = anndata
+        # if axis == 'cell':
+        #     fid = 0
+        #     bid = 0
+        #     while fid < len(fnames):
+        #         current_size = 0
+        #         batch = []
+        #         while fid < len(fnames) and current_size + self.files[fnames[fid]]['size'] <= self.MAX_GPU_MEM_USAGE:
+        #             # sample = sc.read_h5ad(fnames[fid])
+        #             sample = self.read(fnames[fid])
+        #             sample.var_names_make_unique()
+        #             sample.obs_names_make_unique()
+        #             if self.genes_filter is not None:
+        #                 sample = sample[:, self.genes_filter].copy()
+        #             batch.append(sample)
+        #             current_size += self.files[fnames[fid]]['size']
+        #             fid += 1
+        #         batched_data = ad.concat(batch)
+        #         if self.cells_filter is not None:
+        #             batched_data = batched_data[self.cells_filter[bid]].copy()
+        #         batch = []      
+        #         current_size = 0 
+        #         bid += 1
+        #         # gc()
+        #         check_dtype(batched_data)
+        #         rsc.get.anndata_to_GPU(batched_data)
+        #         yield batched_data
+        #         del(batched_data)
+        #         # gc()
         elif axis == 'gene':
             bid = 0
             cells_filter = np.concatenate(self.cells_filter)
@@ -503,13 +566,14 @@ def harmony(
     init_seeds = None,
     n_init = 1,
     dtype = cp.float32,
+    max_iter_harmony = 10,
     random_state = 0,
     **kwargs):
     """
         Harmony GPU version
     """
     X = adata.obsm[basis].astype(float)
-    res = harmonypy_gpu.run_harmony(X, adata.obs, key, init_seeds=init_seeds, n_init=n_init, dtype=dtype)
+    res = harmonypy_gpu.run_harmony(X, adata.obs, key, init_seeds=init_seeds, n_init=n_init, max_iter_harmony=max_iter_harmony, dtype=dtype)
     adata.obsm[adjusted_basis] = res.result()
     return 0
 

@@ -54,6 +54,7 @@ def main(data_dir,                  # data dir containing multiple .h5ad files
          n_neighbors = 20,          # number of neighbors
          resolution = 0.5,          # resolution in leiden
          random_state = 42,         # random state, not guranteed to be the same
+         sample_col_name = 'sampleID',
          save_raw_counts = False,   # save raw counts matrix in batches
          save_norm_counts = False,  # save normalized counts matrix in batches
          save_after_each_step = False,  # save .h5ad after each step
@@ -149,13 +150,13 @@ def main(data_dir,                  # data dir containing multiple .h5ad files
                     (N*cp.square(mean) + squared_batch_counts_sum - 2*batch_counts_sum*mean)
     e_sq_z = (1 / cp.square(std) / (N-1)**2) *\
                     cp.square((squared_batch_counts_sum - N*mean))
-    print('ezsq', e_z_sq)
-    print('esqz', e_sq_z)
+    # print('ezsq', e_z_sq)
+    # print('esqz', e_sq_z)
     norm_gene_var = e_z_sq         
     ranked_norm_gene_vars = cp.argsort(cp.argsort(-norm_gene_var))
     genes_hvg_filter = (ranked_norm_gene_vars < n_top_genes).get() 
-    reader.set_genes_filter(genes_hvg_filter, update=False) # do not update data, since normalization needs to be performed on all genes after filtering.
-    log(f'{STEP}:\t{reader.shape[1]} genes are selected', verbose=verbose)
+    # reader.set_genes_filter(genes_hvg_filter, update=False) # do not update data, since normalization needs to be performed on all genes after filtering.
+    log(f'{STEP}:\t{genes_hvg_filter.sum()} genes are selected', verbose=verbose)
     end_hvg = time()
     log(f'{STEP}:\tfinish in {(end_hvg - start_hvg):.2f}s', level='info', verbose=verbose)
     # --------------------------------------------------------------
@@ -188,8 +189,9 @@ def main(data_dir,                  # data dir containing multiple .h5ad files
     X_pca = cp.zeros([N, n_components], dtype=cp.float64)
     start_index = 0
     for d in reader.batchify(axis='cell'):  # the second loop is used to obtain PCA projection
-        rsc.pp.normalize_total(d, target_sum=1e4)
-        rsc.pp.log1p(d)
+        if not preload_on_cpu:
+            rsc.pp.normalize_total(d, target_sum=1e4)
+            rsc.pp.log1p(d)
         d = d[:, genes_hvg_filter].copy()
         X = d.X.toarray()
         X_pca_batch = (X-m) @ eigvecs
@@ -197,6 +199,7 @@ def main(data_dir,                  # data dir containing multiple .h5ad files
         X_pca[start_index:end_index] = X_pca_batch
         start_index = end_index
     X_pca_cpu = X_pca.get()
+    reader.set_genes_filter(genes_hvg_filter)
     adata = reader.get_anndata_obj()
     adata.obsm['X_pca'] = X_pca_cpu
     end_norm_pca = time()
@@ -209,7 +212,7 @@ def main(data_dir,                  # data dir containing multiple .h5ad files
     STEP = 'Harmony'
     start_harmony = time()
     log(f'{STEP}:\tstart')
-    util.harmony(adata, key='sampleID', init_seeds='2-step', n_init=n_init)
+    util.harmony(adata, key=sample_col_name, init_seeds='2-step', n_init=n_init, max_iter_harmony=20)
     end_harmony = time()
     log(f'{STEP}:\tfinish in {(end_harmony-start_harmony):.2f}s', level='info', verbose=verbose)
     if save_after_each_step:
@@ -247,8 +250,8 @@ def main(data_dir,                  # data dir containing multiple .h5ad files
 
     # ---------------------------------------------------------
 
-    # adata.write_h5ad(f'results/{data_name}_processed.h5ad')
-    # print(f'save to "results/{data_name}_processed.h5ad"')
+    adata.write_h5ad(f'{output_dir}/{data_name}_processed.h5ad')
+    print(f'save to "{output_dir}/{data_name}_processed.h5ad"')
 
 
 
@@ -272,9 +275,10 @@ if __name__ == '__main__':
     # --------------- Test -------------------------
     # main('../data_dir/2.5M_new')
     # main('../data_dir/13M_fake_4', preload_on_cpu=True, preload_on_gpu=False)
-    main('../data_dir/70k_human_lung', preload_on_cpu=True, preload_on_gpu=True, save_norm_counts=True, save_raw_counts=True)
+    # main('../data_dir/70k_human_lung', preload_on_cpu=True, preload_on_gpu=True, save_norm_counts=True, save_raw_counts=True)
     # main('../data_dir/1.3M_mouse_brain', preload_on_cpu=True, preload_on_gpu=True)
-    
+     main('../data_dir/roche_632k', sample_col_name='sample_id_anon', min_genes_per_cell=300, max_genes_per_cell=9000, output_dir='roche_632k_2', preload_on_cpu=True, preload_on_gpu=True, save_norm_counts=True, save_raw_counts=True)
+
 
 
 
