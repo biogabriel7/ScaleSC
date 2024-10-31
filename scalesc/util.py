@@ -53,13 +53,15 @@ class AnnDataBatchReader():
         self.max_cell_batch = max_cell_batch
         self.preload_on_cpu = preload_on_cpu
         self.preload_on_gpu = preload_on_gpu
+        self.have_looped_once = False
         self.anndata = None
+        self.adata = None
         self.n_cell = -1
         self.n_cell_origin = -1
         self.n_gene = -1
         self.n_gene_origin = -1
-        self.genes_filters = []
-        self.cells_filters = []
+        self.genes_filter = None
+        self.cells_filter = None
         self.set_genes_filter(None)
         self.set_cells_filter(None)
 
@@ -84,8 +86,9 @@ class AnnDataBatchReader():
         elif unit == 'M':
             size /= (1024*1024)
         return size
-
-    def get_anndata_obj(self):
+    
+    def _get_anndata_obj(self):
+        assert self.anndata is not None, "anndata object is empty! if preload_on_cpu isFalse, anndata will be automatically initialized after calling reader.batchify()."
         obj = ad.concat(self.anndata)
         if self.cells_filter is not None:
             filter_flatten = []
@@ -100,18 +103,35 @@ class AnnDataBatchReader():
     def shape(self):
         return self.n_cell, self.n_gene
         # return self.n_cell_origin, self.n_gene_origin
-    
+
     def set_cells_filter(self, filter, update=True):
         """
             Update cells filter and applied on data chunks if update set to True,
             otherwise, update filter only. 
         """
         if filter is not None:
+            if self.preload_on_cpu and update:
+                self.update_by_cells_filter(filter)
+            if self.cells_filter is not None:
+                for _cells_filter, _filter in zip(self.cells_filter, filter):
+                    assert sum(_cells_filter) == len(_filter), "current cell filter doesn't match to the previous one."
+                    _cells_filter[_cells_filter == 1] = _filter
+            else:
+                self.cells_filter = filter
             self.n_cell = sum([sum(_) for _ in filter])
             self.n_cell_origin = sum([len(_) for _ in filter])
-        self.cells_filter = filter
-        if self.preload_on_cpu and update:
-            self.update_by_cells_filter(self.cells_filter)
+
+    # def set_cells_filter(self, filter, update=True):
+    #     """
+    #         Update cells filter and applied on data chunks if update set to True,
+    #         otherwise, update filter only. 
+    #     """
+    #     if filter is not None:
+    #         self.n_cell = sum([sum(_) for _ in filter])
+    #         self.n_cell_origin = sum([len(_) for _ in filter])
+    #     self.cells_filter = filter
+    #     if self.preload_on_cpu and update:
+    #         self.update_by_cells_filter(self.cells_filter)
 
     def set_genes_filter(self, filter, update=True):
         """
@@ -123,23 +143,44 @@ class AnnDataBatchReader():
             if self.preload_on_cpu and update:
                 self.update_by_genes_filter(filter)
             if self.genes_filter is not None:
-                assert self.n_gene == len(filter), "current gene filter doens't match the previous one."
-                _genes_filter = np.zeros(len(self.genes_filter), dtype=bool)
-                _genes_filter[np.where(self.genes_filter==1)[0][filter]] = True
-                filter = _genes_filter
-            self.n_gene = sum(filter)
-            self.n_gene_origin = len(filter)
-        self.genes_filter = filter
+                assert self.n_gene == len(filter), "current gene filter doesn't match to the previous one."
+                self.genes_filter[self.genes_filter == 1] = filter
+            else:
+                self.genes_filter = filter
+            self.n_gene = sum(self.genes_filter)
+            self.n_gene_origin = len(self.genes_filter)
+
+    # def set_genes_filter(self, filter, update=True):
+    #     """
+    #         Update genes filter and applied on data chunks if update set to True,
+    #         otherwise, update filter only. 
+    #         Notes:  genes filter can be set sequentially, a new filter should be always compatible with the previous filtered data.
+    #     """
+    #     if filter is not None:
+    #         if self.preload_on_cpu and update:
+    #             self.update_by_genes_filter(filter)
+    #         if self.genes_filter is not None:
+    #             assert self.n_gene == len(filter), "current gene filter doesn't match the previous one."
+    #             _genes_filter = np.zeros(len(self.genes_filter), dtype=bool)
+    #             _genes_filter[np.where(self.genes_filter==1)[0][filter]] = True
+    #             filter = _genes_filter
+    #         self.n_gene = sum(filter)
+    #         self.n_gene_origin = len(filter)
+    #     self.genes_filter = filter
          
     def update_by_cells_filter(self, filter):
         if filter is not None:
             for i in range(len(self.batches)):
                 self.batches[i] = self.batches[i][filter[i]].copy()
+            if self.adata is not None:
+                self.adata = self.adata[np.concatenate(filter)].copy()
 
     def update_by_genes_filter(self, filter):
         if filter is not None:
             for i in range(len(self.batches)):
                 self.batches[i] = self.batches[i][:, filter].copy()
+            if self.adata is not None:
+                self.adata = self.adata[:, filter].copy()
 
     def gpu_wrapper(self, generator):
         for item in generator:
@@ -217,6 +258,7 @@ class AnnDataBatchReader():
             batch = []
             # gc()
         self.anndata = anndata
+        self.adata = self._get_anndata_obj()
 
     def batchify(self, axis='cell'):
         if self.preload_on_cpu:
@@ -296,11 +338,12 @@ class AnnDataBatchReader():
                         d = batch.pop()
                     else:
                         d = ad.concat(batch)
-                    anndata.append(sc.AnnData(obs=d.obs, 
-                                            var=d.var,
-                                            uns=d.uns,
-                                            obsm=d.obsm,
-                                            varm=d.varm,))    
+                    if not self.have_looped_once:
+                        anndata.append(sc.AnnData(obs=d.obs, 
+                                                var=d.var,
+                                                uns=d.uns,
+                                                obsm=d.obsm,
+                                                varm=d.varm,))    
                     if self.genes_filter is not None:
                         d = d[:, self.genes_filter].copy()
                     if self.cells_filter is not None:
@@ -322,11 +365,12 @@ class AnnDataBatchReader():
                     d = batch.pop()
                 else:
                     d = ad.concat(batch)
-                anndata.append(sc.AnnData(obs=d.obs,
-                        var=d.var,
-                        uns=d.uns,
-                        obsm=d.obsm,
-                        varm=d.varm,))   
+                if not self.have_looped_once:
+                    anndata.append(sc.AnnData(obs=d.obs,
+                            var=d.var,
+                            uns=d.uns,
+                            obsm=d.obsm,
+                            varm=d.varm,))   
                 if self.genes_filter is not None:
                     d = d[:, self.genes_filter].copy()
                 if self.cells_filter is not None:
@@ -337,6 +381,7 @@ class AnnDataBatchReader():
                 bid += 1
                 batch = []
             self.anndata = anndata
+            self.have_looped_once = True
         # if axis == 'cell':
         #     fid = 0
         #     bid = 0

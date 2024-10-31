@@ -51,6 +51,7 @@ def main(data_dir,                  # data dir containing multiple .h5ad files
          gpus=None,                 # a list of GPU ids. [0] as default
          max_cell_batch=100000,     # the maximum number of cells in a single batch. improper setting will result in too large indptr in csr_matrix
          n_init = 10,               # number of init in neighbors
+         max_iter_harmony = 20,          # number of iteration in harmony
          n_neighbors = 20,          # number of neighbors
          resolution = 0.5,          # resolution in leiden
          random_state = 42,         # random state, not guranteed to be the same
@@ -200,8 +201,10 @@ def main(data_dir,                  # data dir containing multiple .h5ad files
         start_index = end_index
     X_pca_cpu = X_pca.get()
     reader.set_genes_filter(genes_hvg_filter)
-    adata = reader.get_anndata_obj()
+    adata = reader.adata
     adata.obsm['X_pca'] = X_pca_cpu
+    print(adata[sorted(adata.obs_names)].obsm['X_pca'])
+    print(adata.shape, adata.var)
     end_norm_pca = time()
     log(f'{STEP}:\tfinish in {(end_norm_pca - start_norm_pca):.2f}s', verbose=verbose)
     if save_after_each_step:
@@ -212,7 +215,7 @@ def main(data_dir,                  # data dir containing multiple .h5ad files
     STEP = 'Harmony'
     start_harmony = time()
     log(f'{STEP}:\tstart')
-    util.harmony(adata, key=sample_col_name, init_seeds='2-step', n_init=n_init, max_iter_harmony=20)
+    util.harmony(adata, key=sample_col_name, init_seeds='2-step', n_init=n_init, max_iter_harmony=max_iter_harmony)
     end_harmony = time()
     log(f'{STEP}:\tfinish in {(end_harmony-start_harmony):.2f}s', level='info', verbose=verbose)
     if save_after_each_step:
@@ -275,9 +278,9 @@ if __name__ == '__main__':
     # --------------- Test -------------------------
     # main('../data_dir/2.5M_new')
     # main('../data_dir/13M_fake_4', preload_on_cpu=True, preload_on_gpu=False)
-    # main('../data_dir/70k_human_lung', preload_on_cpu=True, preload_on_gpu=True, save_norm_counts=True, save_raw_counts=True)
+    main('../data_dir/70k_human_lung', preload_on_cpu=True, preload_on_gpu=True, max_cell_batch=10000, save_norm_counts=True, save_raw_counts=True)
     # main('../data_dir/1.3M_mouse_brain', preload_on_cpu=True, preload_on_gpu=True)
-     main('../data_dir/roche_632k', sample_col_name='sample_id_anon', min_genes_per_cell=300, max_genes_per_cell=9000, output_dir='roche_632k_2', preload_on_cpu=True, preload_on_gpu=True, save_norm_counts=True, save_raw_counts=True)
+    #  main('../data_dir/roche_632k', sample_col_name='sample_id_anon', min_genes_per_cell=300, max_genes_per_cell=9000, output_dir='roche_632k_2', preload_on_cpu=True, preload_on_gpu=True, save_norm_counts=True, save_raw_counts=True)
 
 
 
