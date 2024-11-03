@@ -1,7 +1,0 @@
-		input		output
-harmony		X_pca		X_pca_harmony
-pca		hvg		X_pca
-neighbors	
-umap		random state, obsp['connectivities'], min_dist could be the cause for difference.
-		R default 0.1. Python default 0.5.
-leiden		random state, obsp['connectivities']
