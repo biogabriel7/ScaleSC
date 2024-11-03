@@ -20,11 +20,21 @@ Environment Setup:
 3. Install [**rapids-singlecell**](https://rapids-singlecell.readthedocs.io/en/latest/index.html) using pip, \
     `pip install rapids-singlecell` 
 
-3. check env:
+4. Install scaleSC, \
+    - pull scaleSC from github \
+        `git clone https://github.com/interactivereport/scaleSC.git`  \
+    - enter the folder and install scaleSC \
+        `cd scaleSC` \
+        `pip install .`
+5. check env:
+    - `python -c "import scalesc; print(scalesc.__version__)"` == 0.1.0
     - `python -c "import cupy; print(cupy.__version__)"` >= 13.3.0
     - `python -c "import cuml; print(cuml.__version__)"` >= 24.10
     - `python -c "import cupy; print(cupy.cuda.is_available())"` = True
     -  `python -c "import xgboost; print(xgboost.__version__)` >= 2.1.1, optionally for marker annotation.
+
+Tutorial:
+    see ipynb notebook in github.
 
 
     
