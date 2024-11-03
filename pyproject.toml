@@ -1,1 +1,22 @@
-../../package/pyproject.toml
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scalesc"                   
+version = "0.1.0"           
+description = "A GPU-accelerated tool for single-cell RNAseq analysis of extremely large dataset."
+keywords = [ "single cell", "GPU" ]
+readme = "README.md"                   
+authors = [
+            { name = "Haotian Zhang", email = "haotianzh@uconn.edu" }, 
+            { name = "Wenxing Hu", email = "wenxing.hu@biogen.com" },
+            ]
+license = { file = "LICENSE" }         
+requires-python = ">=3.10" 
+dependencies = [
+    "rapids-singlecell"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/interactivereport/scaleSC/tree/main"  
