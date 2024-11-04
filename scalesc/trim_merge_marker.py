@@ -351,6 +351,7 @@ def find_cluster_pairs_to_merge(adata, x, colname, cluster, markers):
 #     return merge_pairs
 
 def adata_cluster_merge(adata, subctype_col):
+    """ Need a description. """
     # 1. find markers
     # 2. if no low acc, exit
     # 3. for each low acc cluster, check his pairs
