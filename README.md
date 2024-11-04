@@ -22,7 +22,7 @@ Environment Setup:
 
 4. Install scaleSC,
     - pull scaleSC from github \
-        `git clone https://github.com/interactivereport/scaleSC.git`  \
+        `git clone https://github.com/interactivereport/scaleSC.git`
     - enter the folder and install scaleSC \
         `cd scaleSC` \
         `pip install .`
