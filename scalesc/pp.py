@@ -29,6 +29,27 @@ def write_to_disk(adata, output_dir, data_name, batch_name=None):
 
 
 class ScaleSC():
+    """ScaleSC integrated pipeline in a scanpy-like style.
+
+    It will automatcially load dataset in chunks, see `scalesc.util.AnnDataBatchReader` 
+    for details, and all methods in this class manipulate this chunked data.
+
+    Args:
+        data_dir (:obj:`str`): Data folder of the dataset.
+        max_cell_batch (:obj:`int`): Maximum number of cells in a single batch.
+            Default: 100000.
+        preload_on_cpu (:obj:`bool`): If load the entire chunked data on CPU. Default: `True`
+        preload_on_gpu (:obj:`bool`): If load the entire chunked data on GPU, `preload_on_cpu` 
+            will be overwritten to `True` when this sets to `True`. Default: `True`.
+        save_raw_counts (:obj:`bool`): If save `adata_X` to disk after QC filtering. 
+            Default: False.
+        save_norm_counts (:obj:`bool`): If save `adata_X` data to disk after normalization. 
+            Default: False.
+        save_after_each_step (:obj:`bool`): If save `adata` (without .X) to disk after each step. 
+            Default: False.
+        output_dir (:obj:`str`): Output folder. Default: './results'.
+        gpus (:obj:`list`): List of GPU ids, `[0]` is set if this is None. Default: None.
+    """
     def __init__(self, data_dir, 
                  max_cell_batch=1e5, 
                  preload_on_cpu=True, 
@@ -51,27 +72,38 @@ class ScaleSC():
         self.gpus = gpus
         self.data_name = data_dir.split('/')[-1]
         self.norm = False
-        self.init()
+        self._init()
 
     @property
     def adata(self):
+        """:obj:`AnnData`: An AnnData object that used to store all intermediate results 
+            without the count matrix. 
+            Note: This is always on CPU.
+        """
         assert self.preload_on_cpu and not self.reader.have_looped_once, "adata hasn't been created, call 'batchify()' once to initialize it."
         return self.reader.adata
 
     @property 
     def adata_X(self):
+        """:obj:`AnnData`: An `AnnData` object that used to store all intermediate results 
+            including the count matrix. Internally, all chunks should be merged on CPU to avoid 
+            high GPU consumption, make sure to invoke `to_CPU()` before calling this object.
+        """
         return self.reader.get_merged_adata_with_X()
     
     def to_GPU(self):
+        """Move all chunks to GPU."""
         self.reader.batch_to_GPU()
     
     def to_CPU(self):
+        """Move all chunks to CPU."""
         self.reader.batch_to_CPU()
     
     def clear(self):
+        """Clean the memory"""
         self.reader.clear()
 
-    def init(self):
+    def _init(self):
         assert os.path.exists(self.data_dir), "Data dir is not existed. Please double check and make sure samples have already been split."
         # TODO: walk dir and get size
         self.reader = util.AnnDataBatchReader(data_dir=self.data_dir, 
@@ -81,11 +113,20 @@ class ScaleSC():
                                      max_cell_batch=self.max_cell_batch) 
         
     def calculate_qc_metrics(self):
+        """Calculate quality control metrics."""
         assert self.preload_on_cpu, "Run in mode with preload_on_cpu as False, terminated."
         for d in self.reader.batchify(axis='cell'):
             rsc.pp.calculate_qc_metrics(d)
 
     def filter_genes(self, min_count=0, max_count=None, qc_var='n_cells_by_counts', qc=False):
+        """Filter genes based on number of a QC metric.
+        
+        Args:
+            min_count (:obj:`int`): Minimum number of counts required for a gene to pass filtering.
+            max_count (:obj:`int`): Maximum number of counts required for a gene to pass filtering.
+            qc_var (:obj:`str`='n_cells_by_counts'): Feature in QC metrics that used to filter genes.
+            qc (:obj:`bool`=`False`): Call `calculate_qc_metrics` before filtering.
+        """
         if qc:
             self.calculate_qc_metrics()
         genes_counts = []
@@ -100,6 +141,14 @@ class ScaleSC():
         self.reader.set_genes_filter(genes_filter, update=True if self.preload_on_cpu else False)
 
     def filter_cells(self, min_count=0, max_count=None, qc_var='n_genes_by_counts', qc=False):
+        """Filter genes based on number of a QC metric.
+        
+        Args:
+            min_count (:obj:`int`): Minimum number of counts required for a cell to pass filtering.
+            max_count (:obj:`int`): Maximum number of counts required for a cell to pass filtering.
+            qc_var (:obj:`str`='n_genes_by_counts'): Feature in QC metrics that used to filter cells.
+            qc (:obj:`bool`=`False`): Call `calculate_qc_metrics` before filtering.
+        """
         if qc:
             self.calculate_qc_metrics()
         cells_filter = []
@@ -115,6 +164,20 @@ class ScaleSC():
                                 max_counts_per_gene=None, max_counts_per_cell=None,
                                 qc_var_gene='n_cells_by_counts', qc_var_cell='n_genes_by_counts', 
                                 qc=False):
+        """Filter genes based on number of a QC metric.
+        
+        Note: 
+            This is an efficient way to perform a regular filtering on genes and cells without
+            repeatedly iterating over chunks.
+        Args:
+            min_counts_per_gene (:obj:`int`): Minimum number of counts required for a gene to pass filtering.
+            max_counts_per_gene (:obj:`int`): Maximum number of counts required for a gene to pass filtering.
+            qc_var_gene (:obj:`str`='n_cells_by_counts'): Feature in QC metrics that used to filter genes.
+            min_counts_per_cell (:obj:`int`): Minimum number of counts required for a cell to pass filtering.
+            max_counts_per_cell (:obj:`int`): Maximum number of counts required for a cell to pass filtering.
+            qc_var_cell (:obj:`str`='n_genes_by_counts'): Feature in QC metrics that used to filter cells.
+            qc (:obj:`bool`=`False`): Call `calculate_qc_metrics` before filtering.
+        """
         if qc:
             self.calculate_qc_metrics()
         num_cells = 0
@@ -135,6 +198,15 @@ class ScaleSC():
  
 
     def highly_variable_genes(self, n_top_genes=4000, method='seurat_v3'):
+        """Annotate highly variable genes.
+
+        Note: 
+            Only `seurat_v3` is implemented. Count data is expected for `seurat_v3`.
+            HVGs are set to `True` in `adata.var['highly_variable']`.
+        Args:
+            n_top_genes (:obj:`int`=`4000`): Number of highly-variable genes to keep.
+            method (:obj:`str`=`'seurat_v3'`): Choose the flavor for identifying highly variable genes.
+        """
         valid_methods = ['seurat_v3']
         assert method in valid_methods, NotImplementedError("only seurat_v3 has been implemented yet.")
         N, M = self.reader.shape
@@ -153,7 +225,7 @@ class ScaleSC():
         model = loess(x.get(), y.get(), span=0.3, degree=2) # fix span and degree here
         model.fit()
         estimate_var[var > 0] = model.outputs.fitted_values
-        std = cp.sqrt(10**estimate_var)  # TODO: problematic, double check later!!!
+        std = cp.sqrt(10**estimate_var)
         clip_val = std * cp.sqrt(N) + mean
         squared_batch_counts_sum = cp.zeros(clip_val.shape, dtype=cp.float64)
         batch_counts_sum = cp.zeros(clip_val.shape, dtype=cp.float64)
@@ -184,6 +256,14 @@ class ScaleSC():
         # reader.set_genes_filter(genes_hvg_filter, update=False) # do not update data, since normalization needs to be performed on all genes after filtering.
         
     def normalize_log1p(self, target_sum=1e4):
+        """Normalize counts per cell then log1p.
+        
+        Note:
+            If `save_raw_counts` or `save_norm_counts` is set, write `adata_X` to disk here automatically.
+        Args:
+            target_sum (:obj:`int`=`1e4`): If None, after normalization, each observation (cell) has a total count
+              equal to the median of total counts for observations (cells) before normalization.
+        """
         assert self.preload_on_cpu, "count matrix manipulation is disabled when preload_on_cpu is False, call 'normalize_log1p_pca' to perform PCA. "
         for i, d in enumerate(self.reader.batchify(axis='cell')):  # the first loop is used to calculate mean and X.TX
             if self.save_raw_counts:
@@ -195,6 +275,17 @@ class ScaleSC():
         self.norm = True
 
     def pca(self, n_components=50, hvg_var='highly_variable'):
+        """Principal component analysis.
+
+        Computes PCA coordinates, loadings and variance decomposition. Uses the implementation of scikit-learn.
+
+        Note: 
+            Flip the directions according to the largest values in loadings. Results will match up with 
+            scanpy perfectly. Calculated PCA matrix is stored in `adata.obsm['X_pca']`.
+        Args:
+            n_components (:obj:`int`=`50`): Number of principal components to compute.
+            hvg_var (:obj:`str`=`'highly_variable'`): Use highly variable genes only.
+        """
         if not self.norm:
             warnings.warn("data may haven't been normalized.")
         N, M = self.reader.shape
@@ -225,6 +316,10 @@ class ScaleSC():
         self.adata.obsm['X_pca'] = X_pca_cpu
  
     def normalize_log1p_pca(self, target_sum=1e4, n_components=50, hvg_var='highly_variable'):
+        """An alternative for calling `normalize_log1p` and `pca` together.  
+        Note:
+            Used when `preload_on_cpu` is `False`.
+        """
         if not self.norm:
             warnings.warn("data may haven't been normalized.")
         N, M = self.reader.shape
@@ -264,32 +359,75 @@ class ScaleSC():
         self.adata.obsm['X_pca'] = X_pca_cpu
 
     def harmony(self, sample_col_name, n_init=10, max_iter_harmony=20):
+        """Use Harmony to integrate different experiments.
+        Note:
+            This modified harmony function can easily scale up to 15M cells with 50 pcs on GPU (A100 80G).
+            Result after harmony is stored into `adata.obsm['X_pca_harmony']`.
+        Args:
+            sample_col_name (:obj:`str`): Column of sample ID.
+            n_init (:obj:`int`=`10`): Number of times the k-means algorithm is run with different centroid seeds.
+            max_iter_harmony (:obj:`int`=`20`): Maximum iteration number of harmony.
+        """
         util.harmony(self.adata, key=sample_col_name, init_seeds='2-step', n_init=n_init, max_iter_harmony=max_iter_harmony)
         if self.save_after_each_step:
             self.save(data_name=f'{self.data_name}_after_harmony')
 
     def neighbors(self, n_neighbors=20, n_pcs=50, use_rep='X_pac_harmony', algorithm='cagra'):
+        """Compute a neighborhood graph of observations using `rapids-singlecell`.
+
+        Args:
+            n_neighbors (:obj:`int`=`20`): The size of local neighborhood (in terms of number of neighboring data points) 
+            used for manifold approximation.
+            n_pcs (:obj:`int`=`50`): Use this many PCs.
+            use_rep (:obj:`str`=`'X_pca_harmony'`): Use the indicated representation.
+            algorithm (:obj:`str`=`'cagra'`): The query algorithm to use.
+        """
         rsc.pp.neighbors(self.adata, n_neighbors=n_neighbors, n_pcs=n_pcs, use_rep=use_rep, algorithm=algorithm)
         if self.save_after_each_step:
             self.save(data_name=f'{self.data_name}_after_neighbor')
     
     def leiden(self, resolution=0.5, random_state=42):
+        """Performs Leiden clustering using `rapids-singlecell`.
+
+        Args:
+            resolution (:obj:`float`=`0.5`): A parameter value controlling the coarseness of the clustering. 
+            (called gamma in the modularity formula). Higher values lead to more clusters.
+            random_state (:obj:`int`=`42`): Random seed.
+        """
         rsc.tl.leiden(self.adata, resolution=resolution, random_state=random_state)
         util.correct_leiden(self.adata)
         if self.save_after_each_step:
             self.save(data_name=f'{self.data_name}_after_leiden')
 
     def umap(self, random_state=42):
+        """Embed the neighborhood graph using `rapids-singlecell`.
+        Args:
+            random_state (:obj:`int`=`42`): Random seed.
+        """
         rsc.tl.umap(self.adata, random_state=random_state)
         if self.save_after_each_step:
             self.save(data_name=f'{self.data_name}_after_umap')
 
     def save(self, data_name=None):
+        """Save `adata` to disk.
+        Note:
+            Save to '`output_dir`/`data_name`.h5ad'.
+        Args:
+            data_name (:obj:`str`): If `None`, set as `data_dir`.
+        """
         if data_name is None:
             data_name = self.data_name
         write_to_disk(adata=self.adata, output_dir=self.output_dir, data_name=data_name)
 
     def savex(self, name, data_name=None):
+        """Save `adata` to disk in chunks.
+        Note:
+            Each chunk will be saved individually in a subfolder under `output_dir`. 
+            Save to '`output_dir`/`name`/`data_name`_`i`.h5ad'.
+        Args:
+            name (:obj:`str`): Subfolder name. 
+            data_name (:obj:`str`): If `None`, set as `data_dir`.
+        """
         if data_name is None:
             data_name = self.data_name
         for i, d in enumerate(self.reader.batchify(axis='cell')):

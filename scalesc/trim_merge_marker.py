@@ -200,10 +200,9 @@ def calculate_median_sparse_fast_gpu(adata, cluster_header):
 
 
 def X_to_GPU(X):
-    """
-    Transfers matrices and arrays to the GPU
-    X
-        Matrix or array to transfer to the GPU
+    """ Transfers matrices and arrays to the GPU.
+    Args:
+        X: Matrix or array to transfer to the GPU.
     """
     if isinstance(X, GPU_ARRAY_TYPE):
         pass

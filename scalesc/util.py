@@ -28,11 +28,7 @@ GPU_ARRAY_TYPE = Union[cp.ndarray, cupyx.scipy.sparse.csr_matrix, cupyx.scipy.sp
 CPU_ARRAY_TYPE = Union[np.ndarray, scipy.sparse.csr_matrix, scipy.sparse.csc_matrix]
 
 class AnnDataBatchReader():
-    """
-        Chunked dataloader for extremely large single-cell dataset. 
-        Return a data chunk each time for further processing.
-        
-    """ 
+    """Chunked dataloader for extremely large single-cell dataset. Return a data chunk each time for further processing.""" 
     def __init__(self, 
                  data_dir, 
                  preload_on_cpu=True, 
@@ -114,7 +110,7 @@ class AnnDataBatchReader():
         return size
     
     def _get_anndata_obj(self):
-        assert self.anndata is not None, "anndata object is empty! if preload_on_cpu isFalse, anndata will be automatically initialized after calling reader.batchify()."
+        assert self.anndata is not None, "anndata object is empty! if preload_on_cpu is False, anndata will be automatically initialized after calling 'batchify()'."
         obj = ad.concat(self.anndata)
         if self.cells_filter is not None:
             filter_flatten = []
@@ -131,10 +127,7 @@ class AnnDataBatchReader():
         # return self.n_cell_origin, self.n_gene_origin
 
     def set_cells_filter(self, filter, update=True):
-        """
-            Update cells filter and applied on data chunks if update set to True,
-            otherwise, update filter only. 
-        """
+        """ Update cells filter and applied on data chunks if `update` set to `True`, otherwise, update filter only."""
         if filter is not None:
             if self.preload_on_cpu and update:
                 self.update_by_cells_filter(filter)
@@ -160,10 +153,10 @@ class AnnDataBatchReader():
     #         self.update_by_cells_filter(self.cells_filter)
 
     def set_genes_filter(self, filter, update=True):
-        """
-            Update genes filter and applied on data chunks if update set to True,
-            otherwise, update filter only. 
-            Notes:  genes filter can be set sequentially, a new filter should be always compatible with the previous filtered data.
+        """ Update genes filter and applied on data chunks if `update` set to True, otherwise, update filter only. 
+            Note:  
+                Genes filter can be set sequentially, a new filter should be always compatible with the previous 
+                filtered data.
         """
         if filter is not None:
             if self.preload_on_cpu and update:
@@ -220,9 +213,7 @@ class AnnDataBatchReader():
         return SUPPORT_EXT[ext](fname)
 
     def _preload(self):
-        """
-            Read files from disk and preload all chunks on GPU if preload_on_gpu set to True, otherwise put on CPU
-        """
+        """ Read files from disk and preload all chunks on GPU if `preload_on_gpu` set to True, otherwise put on CPU."""
         fnames = list(self.files.keys())
         anndata = []
         fid = 0
@@ -287,15 +278,14 @@ class AnnDataBatchReader():
         self.adata = self._get_anndata_obj()
 
     def batchify(self, axis='cell'):
+        """ Return a data generator if `preload_on_cpu` is set as `True`. """
         if self.preload_on_cpu:
             return self._batchify_from_ram(axis=axis)
         else:
             return self._batchify_from_disk(axis=axis) 
         
     def _batchify_from_ram(self, axis='cell'):
-        """
-            Return a generator if preload_on_cpu is set as True.
-        """
+        """ Return a generator if `preload_on_cpu` is set as `True`. """
         t_total = 0
         axes = ['cell', 'gene']
         assert axis in axes, "axis should be either 'cell' or 'gene'."
@@ -336,9 +326,9 @@ class AnnDataBatchReader():
         # print(f'single loop loading time:  {t_total}')
 
     def _batchify_from_disk(self, axis='cell'):
-        """
-            Chunk loader when there is no preload on neither CPU nor GPU
-            Notes: usually this is disabled, we assume there is always enough space on CPU
+        """ Chunk loader when there is no preload on neither CPU nor GPU.
+            Note: 
+                Usually this is disabled, we assume there is always enough space on CPU
         """
         axes = ['cell', 'gene']
         assert axis in axes, "axis should be either 'cell' or 'gene'."
@@ -476,13 +466,12 @@ def filter_cells(
     qc_var,
     min_count,
     max_count):
-    """
-        Cell filtering according to min and max gene counts
+    """ Cell filtering according to min and max gene counts.
 
-        Notes:  filter_cells in rsc doesn't support filter out cells 
-                by min and max counts at the same time. a modification 
-                is made here for dealing with both together 
-
+        Note:  
+            `filter_cells` in rsc doesn't support filter out cells 
+            by min and max counts at the same time. a modification 
+            is made here for dealing with both together.
     """    
     if qc_var in adata.obs.keys():
         if min_count is not None and max_count is not None:
@@ -497,12 +486,15 @@ def filter_cells(
     
 
 def svd_flip(pcs):
-    """
-        Flip the signs of loading according to sign(max(abs(loadings))).
-        Input: pc loadings
-        Return: flipped loadings
+    """ Flip the signs of loading according to sign(max(abs(loadings))).
 
-        Notes: this function is used to match up scanpy's results of PCA
+        Note: this function is used to match up scanpy's results of PCA.
+
+        Args: 
+            pcs (:obj:`np.ndarray`|`cp.ndarray`): PC loadings.
+        
+        Returns:
+            pcs_adjusted (:obj:`np.ndarray`|`cp.ndarray`): Flipped loadings.
     """
     # set the largest loading of each PC as positive
     _min, _max = pcs.min(axis=0), pcs.max(axis=0)
@@ -511,9 +503,9 @@ def svd_flip(pcs):
 
 
 def check_dtype(adata):
-    """
-        Convert dtype to float32 or float64
-        Notes: rapids_singlecell doesn't support sparse matrix under float16
+    """ Convert dtype to `float32` or `float64`.
+        Note: 
+            `rapids-singlecell` doesn't support sparse matrix under `float16`.
     """
     if isinstance(adata.X, scipy.sparse.csr_matrix):
         if not adata.X.dtype == np.float32 or not adata.X.dtype == np.float64:
@@ -523,17 +515,15 @@ def check_dtype(adata):
     
 
 def gc(): 
-    """
-        Release CPU and GPU RAM
-    """
+    """Release CPU and GPU RAM"""
     collect()
     cp.get_default_memory_pool().free_all_blocks()
 
 
 def _mean_var_major(X, major, minor):
-    """
-        Mean and variance kernels for csr_matrix along the major axis
-        Notes: not used for now
+    """ Mean and variance kernels for csr_matrix along the major axis.
+        Note: 
+            Not used for now.
     """
     # from _kernels._mean_var_kernel import _get_mean_var_major
     mean = cp.zeros(major, dtype=cp.float64)
@@ -552,9 +542,9 @@ def _mean_var_major(X, major, minor):
 
 
 def _mean_var_minor(X, major, minor):
-    """
-        Mean and variance kernels for csr_matrix along the minor axis
-        Notes:  modified so that it returns sum(x) and sq_sum(x) instead of mean and variance
+    """ Mean and variance kernels for csr_matrix along the minor axis.
+        Note:  
+            Modified so that it returns sum(x) and sq_sum(x) instead of mean and variance.
     """
     # from _kernels._mean_var_kernel import _get_mean_var_minor
     sums = cp.zeros(minor, dtype=cp.float64)
@@ -568,9 +558,7 @@ def _mean_var_minor(X, major, minor):
 
 
 def _mean_var_dense(X, axis):
-    """
-        Mean and variance kernels for dense matrix
-    """
+    """ Mean and variance kernels for dense matrix. """
     # from _kernels._mean_var_kernel import mean_sum, sq_sum
     var = kernels.sq_sum(X, axis=axis)
     mean = kernels.mean_sum(X, axis=axis)
@@ -582,9 +570,9 @@ def _mean_var_dense(X, axis):
 
 
 def get_mean_var(X, axis=0):
-    """
-        Calculating mean and variance of a given matrix based on customized kernels
-        Notes: no such methods implemented yet for csr_matrix
+    """ Calculating mean and variance of a given matrix based on customized kernels.
+        Note: 
+            No such methods implemented yet for `csr_matrix`.
     """
     if issparse(X):
         if axis == 0:
@@ -611,9 +599,10 @@ def get_mean_var(X, axis=0):
 
 
 def check_nonnegative_integers(X):
-    """
-        Check if X is a nonnegative integer matrix
-        Notes:  check values of data to ensure it is count data
+    """ Check if `X` is a nonnegative integer matrix.
+
+        Note:  
+            Check values of data to ensure it is count data.
     """
     if issparse(X):
         data = X.data
@@ -640,9 +629,7 @@ def harmony(
     max_iter_harmony = 10,
     random_state = 0,
     **kwargs):
-    """
-        Harmony GPU version
-    """
+    """ Harmony GPU version. """
     X = adata.obsm[basis].astype(float)
     res = harmonypy_gpu.run_harmony(X, adata.obs, key, init_seeds=init_seeds, n_init=n_init, max_iter_harmony=max_iter_harmony, dtype=dtype)
     adata.obsm[adjusted_basis] = res.result()
