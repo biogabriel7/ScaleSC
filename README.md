@@ -20,7 +20,7 @@ Environment Setup:
 3. Install [**rapids-singlecell**](https://rapids-singlecell.readthedocs.io/en/latest/index.html) using pip, \
     `pip install rapids-singlecell` 
 
-4. Install scaleSC, \
+4. Install scaleSC,
     - pull scaleSC from github \
         `git clone https://github.com/interactivereport/scaleSC.git`  \
     - enter the folder and install scaleSC \
