@@ -48,25 +48,19 @@ def get_usage(s):
     pass
 
 def to_csr_cuda(x, dtype):
-    """
-       move to GPU as a csr_matrix
-    """
+    """ Move to GPU as a csr_matrix. """
     # if issparse(x):
     #     return csr_matrix_cuda(x, dtype=dtype)
     return csr_matrix_cuda(csr_matrix(x, dtype=dtype))
 
 def to_csc_cuda(x, dtype):
-    """
-        move to GPU as a csc_matrix, speed up column slice.
-    """
+    """ Move to GPU as a csc_matrix, speed up column slice. """
     # if issparse(x):
     #     return csc_matrix_cuda(x, dtype=dtype)
     return csc_matrix_cuda(csc_matrix(x, dtype=dtype))
 
 def get_dummies(x):
-    """
-        return a sparse dummy matrix
-    """
+    """ Return a sparse dummy matrix. """
     x = x.to_numpy().flatten()
     data = np.zeros(x.shape[0], dtype=np.float32)
     i = np.zeros(x.shape[0], dtype=int)

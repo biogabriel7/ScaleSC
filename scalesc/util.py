@@ -154,6 +154,7 @@ class AnnDataBatchReader():
 
     def set_genes_filter(self, filter, update=True):
         """ Update genes filter and applied on data chunks if `update` set to True, otherwise, update filter only. 
+
             Note:  
                 Genes filter can be set sequentially, a new filter should be always compatible with the previous 
                 filtered data.
@@ -327,6 +328,7 @@ class AnnDataBatchReader():
 
     def _batchify_from_disk(self, axis='cell'):
         """ Chunk loader when there is no preload on neither CPU nor GPU.
+
             Note: 
                 Usually this is disabled, we assume there is always enough space on CPU
         """
@@ -504,6 +506,7 @@ def svd_flip(pcs):
 
 def check_dtype(adata):
     """ Convert dtype to `float32` or `float64`.
+
         Note: 
             `rapids-singlecell` doesn't support sparse matrix under `float16`.
     """
@@ -522,6 +525,7 @@ def gc():
 
 def _mean_var_major(X, major, minor):
     """ Mean and variance kernels for csr_matrix along the major axis.
+
         Note: 
             Not used for now.
     """
@@ -543,6 +547,7 @@ def _mean_var_major(X, major, minor):
 
 def _mean_var_minor(X, major, minor):
     """ Mean and variance kernels for csr_matrix along the minor axis.
+
         Note:  
             Modified so that it returns sum(x) and sq_sum(x) instead of mean and variance.
     """
@@ -571,6 +576,7 @@ def _mean_var_dense(X, axis):
 
 def get_mean_var(X, axis=0):
     """ Calculating mean and variance of a given matrix based on customized kernels.
+
         Note: 
             No such methods implemented yet for `csr_matrix`.
     """
@@ -658,16 +664,18 @@ def csr_indptr_to_coo_rows(nnz, Bp):
 
 
 def csr_row_index(Ax, Aj, Ap, rows):
-    """Populate indices and data arrays from the given row index
+    """Populate indices and data arrays from the given row index.
+
     Args:
-        Ax (cupy.ndarray): data array from input sparse matrix
-        Aj (cupy.ndarray): indices array from input sparse matrix
-        Ap (cupy.ndarray): indptr array from input sparse matrix
-        rows (cupy.ndarray): index array of rows to populate
+        Ax (`cupy.ndarray`): data array from input sparse matrix
+        Aj (`cupy.ndarray`): indices array from input sparse matrix
+        Ap (`cupy.ndarray`): indptr array from input sparse matrix
+        rows (`cupy.ndarray`): index array of rows to populate
+
     Returns:
-        Bx (cupy.ndarray): data array of output sparse matrix
-        Bj (cupy.ndarray): indices array of output sparse matrix
-        Bp (cupy.ndarray): indptr array for output sparse matrix
+        Bx (`cupy.ndarray`): data array of output sparse matrix
+        Bj (`cupy.ndarray`): indices array of output sparse matrix
+        Bp (`cupy.ndarray`): indptr array for output sparse matrix
     """
     row_nnz = cp.diff(Ap)
     Bp = cp.empty(rows.size + 1, dtype=np.int64)

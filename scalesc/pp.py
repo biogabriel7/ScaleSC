@@ -35,20 +35,20 @@ class ScaleSC():
     for details, and all methods in this class manipulate this chunked data.
 
     Args:
-        data_dir (:obj:`str`): Data folder of the dataset.
-        max_cell_batch (:obj:`int`): Maximum number of cells in a single batch.
+        data_dir (`str`): Data folder of the dataset.
+        max_cell_batch (`int`): Maximum number of cells in a single batch.
             Default: 100000.
-        preload_on_cpu (:obj:`bool`): If load the entire chunked data on CPU. Default: `True`
-        preload_on_gpu (:obj:`bool`): If load the entire chunked data on GPU, `preload_on_cpu` 
+        preload_on_cpu (`bool`): If load the entire chunked data on CPU. Default: `True`
+        preload_on_gpu (`bool`): If load the entire chunked data on GPU, `preload_on_cpu` 
             will be overwritten to `True` when this sets to `True`. Default: `True`.
-        save_raw_counts (:obj:`bool`): If save `adata_X` to disk after QC filtering. 
+        save_raw_counts (`bool`): If save `adata_X` to disk after QC filtering. 
             Default: False.
-        save_norm_counts (:obj:`bool`): If save `adata_X` data to disk after normalization. 
+        save_norm_counts (`bool`): If save `adata_X` data to disk after normalization. 
             Default: False.
-        save_after_each_step (:obj:`bool`): If save `adata` (without .X) to disk after each step. 
+        save_after_each_step (`bool`): If save `adata` (without .X) to disk after each step. 
             Default: False.
-        output_dir (:obj:`str`): Output folder. Default: './results'.
-        gpus (:obj:`list`): List of GPU ids, `[0]` is set if this is None. Default: None.
+        output_dir (`str`): Output folder. Default: './results'.
+        gpus (`list`): List of GPU ids, `[0]` is set if this is None. Default: None.
     """
     def __init__(self, data_dir, 
                  max_cell_batch=1e5, 
@@ -76,8 +76,9 @@ class ScaleSC():
 
     @property
     def adata(self):
-        """:obj:`AnnData`: An AnnData object that used to store all intermediate results 
+        """`AnnData`: An AnnData object that used to store all intermediate results 
             without the count matrix. 
+
             Note: This is always on CPU.
         """
         assert self.preload_on_cpu and not self.reader.have_looped_once, "adata hasn't been created, call 'batchify()' once to initialize it."
@@ -85,7 +86,7 @@ class ScaleSC():
 
     @property 
     def adata_X(self):
-        """:obj:`AnnData`: An `AnnData` object that used to store all intermediate results 
+        """`AnnData`: An `AnnData` object that used to store all intermediate results 
             including the count matrix. Internally, all chunks should be merged on CPU to avoid 
             high GPU consumption, make sure to invoke `to_CPU()` before calling this object.
         """
@@ -122,10 +123,10 @@ class ScaleSC():
         """Filter genes based on number of a QC metric.
         
         Args:
-            min_count (:obj:`int`): Minimum number of counts required for a gene to pass filtering.
-            max_count (:obj:`int`): Maximum number of counts required for a gene to pass filtering.
-            qc_var (:obj:`str`='n_cells_by_counts'): Feature in QC metrics that used to filter genes.
-            qc (:obj:`bool`=`False`): Call `calculate_qc_metrics` before filtering.
+            min_count (`int`): Minimum number of counts required for a gene to pass filtering.
+            max_count (`int`): Maximum number of counts required for a gene to pass filtering.
+            qc_var (`str`='n_cells_by_counts'): Feature in QC metrics that used to filter genes.
+            qc (`bool`=`False`): Call `calculate_qc_metrics` before filtering.
         """
         if qc:
             self.calculate_qc_metrics()
@@ -144,10 +145,10 @@ class ScaleSC():
         """Filter genes based on number of a QC metric.
         
         Args:
-            min_count (:obj:`int`): Minimum number of counts required for a cell to pass filtering.
-            max_count (:obj:`int`): Maximum number of counts required for a cell to pass filtering.
-            qc_var (:obj:`str`='n_genes_by_counts'): Feature in QC metrics that used to filter cells.
-            qc (:obj:`bool`=`False`): Call `calculate_qc_metrics` before filtering.
+            min_count (`int`): Minimum number of counts required for a cell to pass filtering.
+            max_count (`int`): Maximum number of counts required for a cell to pass filtering.
+            qc_var (`str`='n_genes_by_counts'): Feature in QC metrics that used to filter cells.
+            qc (`bool`=`False`): Call `calculate_qc_metrics` before filtering.
         """
         if qc:
             self.calculate_qc_metrics()
@@ -169,14 +170,15 @@ class ScaleSC():
         Note: 
             This is an efficient way to perform a regular filtering on genes and cells without
             repeatedly iterating over chunks.
+
         Args:
-            min_counts_per_gene (:obj:`int`): Minimum number of counts required for a gene to pass filtering.
-            max_counts_per_gene (:obj:`int`): Maximum number of counts required for a gene to pass filtering.
-            qc_var_gene (:obj:`str`='n_cells_by_counts'): Feature in QC metrics that used to filter genes.
-            min_counts_per_cell (:obj:`int`): Minimum number of counts required for a cell to pass filtering.
-            max_counts_per_cell (:obj:`int`): Maximum number of counts required for a cell to pass filtering.
-            qc_var_cell (:obj:`str`='n_genes_by_counts'): Feature in QC metrics that used to filter cells.
-            qc (:obj:`bool`=`False`): Call `calculate_qc_metrics` before filtering.
+            min_counts_per_gene (`int`): Minimum number of counts required for a gene to pass filtering.
+            max_counts_per_gene (`int`): Maximum number of counts required for a gene to pass filtering.
+            qc_var_gene (`str`='n_cells_by_counts'): Feature in QC metrics that used to filter genes.
+            min_counts_per_cell (`int`): Minimum number of counts required for a cell to pass filtering.
+            max_counts_per_cell (`int`): Maximum number of counts required for a cell to pass filtering.
+            qc_var_cell (`str`='n_genes_by_counts'): Feature in QC metrics that used to filter cells.
+            qc (`bool`=`False`): Call `calculate_qc_metrics` before filtering.
         """
         if qc:
             self.calculate_qc_metrics()
@@ -203,9 +205,10 @@ class ScaleSC():
         Note: 
             Only `seurat_v3` is implemented. Count data is expected for `seurat_v3`.
             HVGs are set to `True` in `adata.var['highly_variable']`.
+
         Args:
-            n_top_genes (:obj:`int`=`4000`): Number of highly-variable genes to keep.
-            method (:obj:`str`=`'seurat_v3'`): Choose the flavor for identifying highly variable genes.
+            n_top_genes (`int`=`4000`): Number of highly-variable genes to keep.
+            method (`str`=`'seurat_v3'`): Choose the flavor for identifying highly variable genes.
         """
         valid_methods = ['seurat_v3']
         assert method in valid_methods, NotImplementedError("only seurat_v3 has been implemented yet.")
@@ -260,8 +263,9 @@ class ScaleSC():
         
         Note:
             If `save_raw_counts` or `save_norm_counts` is set, write `adata_X` to disk here automatically.
+
         Args:
-            target_sum (:obj:`int`=`1e4`): If None, after normalization, each observation (cell) has a total count
+            target_sum (`int`=`1e4`): If None, after normalization, each observation (cell) has a total count
               equal to the median of total counts for observations (cells) before normalization.
         """
         assert self.preload_on_cpu, "count matrix manipulation is disabled when preload_on_cpu is False, call 'normalize_log1p_pca' to perform PCA. "
@@ -282,9 +286,10 @@ class ScaleSC():
         Note: 
             Flip the directions according to the largest values in loadings. Results will match up with 
             scanpy perfectly. Calculated PCA matrix is stored in `adata.obsm['X_pca']`.
+
         Args:
-            n_components (:obj:`int`=`50`): Number of principal components to compute.
-            hvg_var (:obj:`str`=`'highly_variable'`): Use highly variable genes only.
+            n_components (`int`=`50`): Number of principal components to compute.
+            hvg_var (`str`=`'highly_variable'`): Use highly variable genes only.
         """
         if not self.norm:
             warnings.warn("data may haven't been normalized.")
@@ -317,6 +322,7 @@ class ScaleSC():
  
     def normalize_log1p_pca(self, target_sum=1e4, n_components=50, hvg_var='highly_variable'):
         """An alternative for calling `normalize_log1p` and `pca` together.  
+
         Note:
             Used when `preload_on_cpu` is `False`.
         """
@@ -360,13 +366,15 @@ class ScaleSC():
 
     def harmony(self, sample_col_name, n_init=10, max_iter_harmony=20):
         """Use Harmony to integrate different experiments.
+
         Note:
             This modified harmony function can easily scale up to 15M cells with 50 pcs on GPU (A100 80G).
             Result after harmony is stored into `adata.obsm['X_pca_harmony']`.
+
         Args:
-            sample_col_name (:obj:`str`): Column of sample ID.
-            n_init (:obj:`int`=`10`): Number of times the k-means algorithm is run with different centroid seeds.
-            max_iter_harmony (:obj:`int`=`20`): Maximum iteration number of harmony.
+            sample_col_name (`str`): Column of sample ID.
+            n_init (`int`=`10`): Number of times the k-means algorithm is run with different centroid seeds.
+            max_iter_harmony (`int`=`20`): Maximum iteration number of harmony.
         """
         util.harmony(self.adata, key=sample_col_name, init_seeds='2-step', n_init=n_init, max_iter_harmony=max_iter_harmony)
         if self.save_after_each_step:
@@ -376,11 +384,11 @@ class ScaleSC():
         """Compute a neighborhood graph of observations using `rapids-singlecell`.
 
         Args:
-            n_neighbors (:obj:`int`=`20`): The size of local neighborhood (in terms of number of neighboring data points) 
+            n_neighbors (`int`=`20`): The size of local neighborhood (in terms of number of neighboring data points) 
             used for manifold approximation.
-            n_pcs (:obj:`int`=`50`): Use this many PCs.
-            use_rep (:obj:`str`=`'X_pca_harmony'`): Use the indicated representation.
-            algorithm (:obj:`str`=`'cagra'`): The query algorithm to use.
+            n_pcs (`int`=`50`): Use this many PCs.
+            use_rep (`str`=`'X_pca_harmony'`): Use the indicated representation.
+            algorithm (`str`=`'cagra'`): The query algorithm to use.
         """
         rsc.pp.neighbors(self.adata, n_neighbors=n_neighbors, n_pcs=n_pcs, use_rep=use_rep, algorithm=algorithm)
         if self.save_after_each_step:
@@ -390,9 +398,9 @@ class ScaleSC():
         """Performs Leiden clustering using `rapids-singlecell`.
 
         Args:
-            resolution (:obj:`float`=`0.5`): A parameter value controlling the coarseness of the clustering. 
+            resolution (`float`=`0.5`): A parameter value controlling the coarseness of the clustering. 
             (called gamma in the modularity formula). Higher values lead to more clusters.
-            random_state (:obj:`int`=`42`): Random seed.
+            random_state (`int`=`42`): Random seed.
         """
         rsc.tl.leiden(self.adata, resolution=resolution, random_state=random_state)
         util.correct_leiden(self.adata)
@@ -401,8 +409,9 @@ class ScaleSC():
 
     def umap(self, random_state=42):
         """Embed the neighborhood graph using `rapids-singlecell`.
+
         Args:
-            random_state (:obj:`int`=`42`): Random seed.
+            random_state (`int`=`42`): Random seed.
         """
         rsc.tl.umap(self.adata, random_state=random_state)
         if self.save_after_each_step:
@@ -410,10 +419,12 @@ class ScaleSC():
 
     def save(self, data_name=None):
         """Save `adata` to disk.
+
         Note:
             Save to '`output_dir`/`data_name`.h5ad'.
+
         Args:
-            data_name (:obj:`str`): If `None`, set as `data_dir`.
+            data_name (`str`): If `None`, set as `data_dir`.
         """
         if data_name is None:
             data_name = self.data_name
@@ -421,12 +432,14 @@ class ScaleSC():
 
     def savex(self, name, data_name=None):
         """Save `adata` to disk in chunks.
+
         Note:
             Each chunk will be saved individually in a subfolder under `output_dir`. 
             Save to '`output_dir`/`name`/`data_name`_`i`.h5ad'.
+            
         Args:
-            name (:obj:`str`): Subfolder name. 
-            data_name (:obj:`str`): If `None`, set as `data_dir`.
+            name (`str`): Subfolder name. 
+            data_name (`str`): If `None`, set as `data_dir`.
         """
         if data_name is None:
             data_name = self.data_name
