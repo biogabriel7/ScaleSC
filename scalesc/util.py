@@ -16,7 +16,7 @@ import scipy.sparse
 import cupyx.scipy.sparse
 from cupyx.scipy.sparse import issparse, isspmatrix_csc, isspmatrix_csr, spmatrix
 # import harmonypy_gpu
-from . import harmonypy_gpu, kernels
+from scalesc import harmonypy_gpu, kernels
 # comment when debug
 warnings.filterwarnings('ignore', 'Expected ')
 warnings.simplefilter('ignore')
@@ -692,6 +692,16 @@ def csr_col_index(Ax, Aj, Ai, cols, shape):
     kernels.check_in_cols_kernel(Aj, cols.size, cols, col_ind)
     coo = scipy.sparse.coo_matrix((Ax[col_ind].get(), (Ai[col_ind].get(), Aj[col_ind].get())), shape=shape)
     return coo
+
+
+def write_to_disk(adata, output_dir, data_name, batch_name=None):
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        if batch_name is None:
+            out_name = f'{output_dir}/{data_name}.h5ad'
+        else:
+            out_name = f'{output_dir}/{data_name}.{batch_name}.h5ad'
+        adata.write_h5ad(out_name)
 
 
 # if __name__ == 'scalesc.util':

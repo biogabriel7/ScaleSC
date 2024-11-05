@@ -22,8 +22,8 @@ from sklearn.utils.sparsefuncs import csc_median_axis_0
 from scipy import sparse as sparse_cpu
 from cupyx.scipy import sparse as sparse_gpu
 
-from .kernels import *
-from . import util
+from scalesc.kernels import *
+from scalesc import util
 
 warnings.filterwarnings("ignore")
 

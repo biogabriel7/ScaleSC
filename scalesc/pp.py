@@ -7,25 +7,8 @@ import scanpy as sc
 import rapids_singlecell as rsc
 from skmisc.loess import loess
 from time import time 
-from . import util
-from .kernels import *
-
-logger = logging.getLogger("scaleSC")
-logger.setLevel(logging.DEBUG)
-ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-ch.setFormatter(formatter)
-logger.addHandler(ch)
-
-def write_to_disk(adata, output_dir, data_name, batch_name=None):
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        if batch_name is None:
-            out_name = f'{output_dir}/{data_name}.h5ad'
-        else:
-            out_name = f'{output_dir}/{data_name}.{batch_name}.h5ad'
-        adata.write_h5ad(out_name)
+from scalesc import util
+from scalesc.kernels import *
 
 
 class ScaleSC():
@@ -271,11 +254,11 @@ class ScaleSC():
         assert self.preload_on_cpu, "count matrix manipulation is disabled when preload_on_cpu is False, call 'normalize_log1p_pca' to perform PCA. "
         for i, d in enumerate(self.reader.batchify(axis='cell')):  # the first loop is used to calculate mean and X.TX
             if self.save_raw_counts:
-                write_to_disk(d, output_dir=f'{self.output_dir}/raw_counts', data_name=self.data_name, batch_name=f'batch_{i}')
+                util.write_to_disk(d, output_dir=f'{self.output_dir}/raw_counts', data_name=self.data_name, batch_name=f'batch_{i}')
             rsc.pp.normalize_total(d, target_sum=target_sum)
             rsc.pp.log1p(d)
             if self.save_norm_counts:
-                write_to_disk(d, output_dir=f'{self.output_dir}/norm_counts', data_name=self.data_name, batch_name=f'batch_{i}')
+                util.write_to_disk(d, output_dir=f'{self.output_dir}/norm_counts', data_name=self.data_name, batch_name=f'batch_{i}')
         self.norm = True
 
     def pca(self, n_components=50, hvg_var='highly_variable'):
@@ -335,11 +318,11 @@ class ScaleSC():
         s = cp.zeros((1, n_top_genes), dtype=cp.float64)
         for i, d in enumerate(self.reader.batchify(axis='cell')):
             if self.save_raw_counts:
-                write_to_disk(d, output_dir=f'{self.output_dir}/raw_counts', data_name=self.data_name, batch_name=f'batch_{i}')
+                util.write_to_disk(d, output_dir=f'{self.output_dir}/raw_counts', data_name=self.data_name, batch_name=f'batch_{i}')
             rsc.pp.normalize_total(d, target_sum=target_sum)
             rsc.pp.log1p(d)
             if self.save_norm_counts:
-                write_to_disk(d, output_dir=f'{self.output_dir}/norm_counts', data_name=self.data_name, batch_name=f'batch_{i}')
+                util.write_to_disk(d, output_dir=f'{self.output_dir}/norm_counts', data_name=self.data_name, batch_name=f'batch_{i}')
             d = d[:, genes_hvg_filter].copy()   # use all genes to normalize instead of hvgs
             X = d.X.toarray() 
             cov += cp.dot(X.T, X)  
@@ -428,7 +411,7 @@ class ScaleSC():
         """
         if data_name is None:
             data_name = self.data_name
-        write_to_disk(adata=self.adata, output_dir=self.output_dir, data_name=data_name)
+        util.write_to_disk(adata=self.adata, output_dir=self.output_dir, data_name=data_name)
 
     def savex(self, name, data_name=None):
         """Save `adata` to disk in chunks.
@@ -436,7 +419,7 @@ class ScaleSC():
         Note:
             Each chunk will be saved individually in a subfolder under `output_dir`. 
             Save to '`output_dir`/`name`/`data_name`_`i`.h5ad'.
-            
+
         Args:
             name (`str`): Subfolder name. 
             data_name (`str`): If `None`, set as `data_dir`.
@@ -444,7 +427,7 @@ class ScaleSC():
         if data_name is None:
             data_name = self.data_name
         for i, d in enumerate(self.reader.batchify(axis='cell')):
-            write_to_disk(d, output_dir=f'{self.output_dir}/{name}', batch_name=f'batch_{i}', data_name=data_name)
+            util.write_to_disk(d, output_dir=f'{self.output_dir}/{name}', batch_name=f'batch_{i}', data_name=data_name)
 
         
 # if __name__ == 'scalesc.pp':

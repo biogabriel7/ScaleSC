@@ -3,6 +3,6 @@ build/
 scalesc.egg-info/
 html/
 docs/
-test/
+test*/
 .ipynb_checkpoints/
 Test.ipynb
