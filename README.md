@@ -57,8 +57,9 @@
 </div>
 
 ## How To Install
-<div style="margin-left: 50px;">
-
+>#### Note: scaleSC requires a **high-end GPU** and a matching **CUDA** version to support GPU-accelerated computing.
+<div style="margin-left: 20px;">
+ 
 Requirements:
 >   - [**RAPIDS**](https://rapids.ai/) from Nvidia
 >   - [**rapids-singlecell**](https://rapids-singlecell.readthedocs.io/en/latest/index.html), an alternative of *scanpy* that employs GPU for acceleration. 
@@ -88,9 +89,7 @@ Environment Setup:
     - `python -c "import cupy; print(cupy.__version__)"` >= 13.3.0
     - `python -c "import cuml; print(cuml.__version__)"` >= 24.10
     - `python -c "import cupy; print(cupy.cuda.is_available())"` = True
-    -  `python -c "import xgboost; print(xgboost.__version__)` >= 2.1.1, optionally for marker annotation.
-
->#### Note: scaleSC requires a **high-end GPU** and a matching **CUDA** version to support GPU-accelerated computing. 
+    -  `python -c "import xgboost; print(xgboost.__version__)` >= 2.1.1, optionally for marker annotation
 
 </div>
 
