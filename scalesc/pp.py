@@ -18,6 +18,7 @@ class ScaleSC():
     for details, and all methods in this class manipulate this chunked data.
 
     Args:
+
         data_dir (`str`): Data folder of the dataset.
         max_cell_batch (`int`): Maximum number of cells in a single batch.
             Default: 100000.
