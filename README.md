@@ -72,11 +72,10 @@
 <div style="margin-left: 20px;">
  
 Requirements:
->   - [**RAPIDS**](https://rapids.ai/) from Nvidia
->   - [**rapids-singlecell**](https://rapids-singlecell.readthedocs.io/en/latest/index.html), an alternative of *scanpy* that employs GPU for acceleration. 
->   - [**Conda**](https://docs.conda.io/projects/conda/en/latest/index.html), version >=22.11 is strongly encoruaged, because *conda-libmamba-solver* is set as default, which 
-significant speeds up solving dependencies.  
->   - [**pip**](), a python package installer.
+- [**RAPIDS**](https://rapids.ai/) from Nvidia
+- [**rapids-singlecell**](https://rapids-singlecell.readthedocs.io/en/latest/index.html), an alternative of *scanpy* that employs GPU for acceleration. 
+- [**Conda**](https://docs.conda.io/projects/conda/en/latest/index.html), version >=22.11 is strongly encoruaged, because *conda-libmamba-solver* is set as default, which significant speeds up solving dependencies.  
+- [**pip**](), a python package installer.
 
 Environment Setup:
 1. Install [**RAPIDS**](https://rapids.ai/) through Conda, \
