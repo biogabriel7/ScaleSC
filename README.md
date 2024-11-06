@@ -18,12 +18,10 @@
 </p> -->
 
 <p align="center">
-  <a href="#getting-started">Getting Started</a> •
-  <a href="#features">Features</a> •
-  <a href="#documentation">Documentation</a> •
-  <a href="#support--feedback">Support</a> •
-  <a href="#contribution">Contribution</a> •
-  <a href="https://github.com/ml-tooling/lazydocs/releases">Changelog</a>
+  <a href="#highlights">Highlights</a> •
+  <a href="#why-scalesc">Why ScaleSC</a> •
+  <a href="#how-to-install">Installation</a> •
+  <a href="#api-reference">API Reference</a>
 </p>
 
 ## Highlights
@@ -36,22 +34,26 @@
 ## Why ScaleSC
 
 <div align="center">
+<b>Overview of different packages.</b>
 
 | | `Scanpy` | `ScaleSC` | `Rapids-singlecell` |
 |:----------:|:----------:|:----------:|:----------:|
-| GPU Support | **X** | ✔ | ✔ |
-| `int32` Issue of Sparse | **X** | **X** | ✔ |
-| Upper Limit of #cell | **$\infty$** | **$\infty$** | ~1M |
-| Upper Limit of #sample | **$\infty$** | **$\infty$** | <100 |
+| GPU Support | ❌ | ✅ | ✅ |
+| `int32` Issue of Sparse | ❌ | ❌ | ✅ |
+| Upper Limit of #cell | ♾️ | ♾️ | **~1M** |
+| Upper Limit of #sample | ♾️ | ♾️ | **<100** |
 
-Overview of different packages.
+
 </div>
+
+<br></br>
 
 <div align="center">
 
+<b>Time comparsion between `Scanpy`(CPU) and `ScaleSc`(GPU).</b>
+
 <img src="./img/time_comp.jpeg" alt="time-comp" width="50%" height="auto">
 
-Time comparsion between `Scanpy`(CPU) and `ScaleSc`(GPU).
 </div>
 
 ## How To Install
@@ -720,5 +722,8 @@ _This file was automatically generated via [lazydocs](https://github.com/ml-tool
 
 </div>
 
+
+## Contact
+- @haotianzh
 
     
