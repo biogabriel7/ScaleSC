@@ -57,7 +57,7 @@
 </div>
 
 ## How To Install
-<div style="margin-left: 20px;">
+<div style="margin-left: 50px;">
 
 Requirements:
 >   - [**RAPIDS**](https://rapids.ai/) from Nvidia
