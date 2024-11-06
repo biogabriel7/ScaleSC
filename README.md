@@ -68,7 +68,7 @@
 </div>
 
 ## How To Install
->#### Note: ScaleSC requires a **high-end GPU** and a matching **CUDA** version to support GPU-accelerated computing.
+>#### Note: ScaleSC requires a **high-end GPU** (> 24G VRAM) and a matching **CUDA** version to support GPU-accelerated computing.
 <div style="margin-left: 20px;">
  
 Requirements:
