@@ -734,6 +734,6 @@ _This file was automatically generated via [lazydocs](https://github.com/ml-tool
 
 
 ## Contact
-- [@haotianzh](mailto:johndoe@fakeemail.com)
+- [@haotianzh](mailto:haotianzh@uconn.edu)
 
     
