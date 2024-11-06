@@ -52,7 +52,7 @@
 
 <b>Time comparsion between `Scanpy`(CPU) and `ScaleSc`(GPU).</b>
 
-<img src="./img/time_comp.jpeg" alt="time-comp" width="50%" height="auto">
+<img src="./img/time_comp.jpeg" alt="time-comp" width="80%" height="auto">
 
 </div>
 
