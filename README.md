@@ -26,23 +26,34 @@
 
 ## Highlights
 
-- Fast scRNA-seq pipeline including QC, Normalization, Batch-effect Removal, Dimension Reduction in a similar way as `scanpy` and `rapids-singlecell`.
-- Scale to dataset with more than 10M cells. Avoid the `int32` limitation on `cupyx.scipy.sparse` used by `rapids-singlecell`, which disables the computing for even moderate-size dataset, says 1M.
+- Fast scRNA-seq pipeline including QC, Normalization, Batch-effect Removal, Dimension Reduction in a similar syntax as `scanpy` and `rapids-singlecell`.
+- Scale to dataset with more than 10M cells. Chunk the data to avoid the `int32` limitation in `cupyx.scipy.sparse` used by `rapids-singlecell` that disables the computing for even moderate-size dataset (~1M).
 - Reconcile output at each step to `scanpy` to reproduce the same results as on CPU end.
 - Improvement on `harmonypy` which allows dataset with more than 10M cells and more than 1000 samples to be run on a single GPU (A100 80G).
 
 ## Why ScaleSC
 
 <div align="center">
-<b>Overview of different packages.</b>
 
-| | `Scanpy` | `ScaleSC` | `Rapids-singlecell` |
+<b>ScaleSC Outline</b>
+
+<img src="./img/pipeline.png" alt="time-comp" width="75%" height="auto">
+
+</div>
+
+<br></br>
+
+<div align="center">
+<b>Overview of different packages*</b>
+
+| | `scanpy` | `scalesc` | `rapids-singlecell` |
 |:----------:|:----------:|:----------:|:----------:|
 | GPU Support | ❌ | ✅ | ✅ |
-| `int32` Issue of Sparse | ❌ | ❌ | ✅ |
-| Upper Limit of #cell | ♾️ | ♾️ | **~1M** |
-| Upper Limit of #sample | ♾️ | ♾️ | **<100** |
+| `int32` Issue in Sparse | ❌ | ❌ | ✅ |
+| Upper Limit of #cell | ♾️ | **~20M** | ~1M |
+| Upper Limit of #sample | ♾️ | **>1000** | <100 |
 
+\* Test on datasets with ~35k genes. `scalesc` only support to run Harmony on a single GPU, this memory limitation greatly limits the capability of scaling to even larger dataset. However, there would be no limitation on number of cells if you prefer not to run Harmony (QC, HVG, and PCA only).  
 
 </div>
 
@@ -50,14 +61,14 @@
 
 <div align="center">
 
-<b>Time comparsion between `Scanpy`(CPU) and `ScaleSc`(GPU).</b>
+<b>Time comparsion between `scanpy`(CPU) and `scalesc`(GPU) on A100(80G)</b>
 
 <img src="./img/time_comp.png" alt="time-comp" width="80%" height="auto">
 
 </div>
 
 ## How To Install
->#### Note: scaleSC requires a **high-end GPU** and a matching **CUDA** version to support GPU-accelerated computing.
+>#### Note: ScaleSC requires a **high-end GPU** and a matching **CUDA** version to support GPU-accelerated computing.
 <div style="margin-left: 20px;">
  
 Requirements:
