@@ -126,8 +126,7 @@ It will automatcially load dataset in chunks, see `scalesc.util.AnnDataBatchRead
  - <b>`max_cell_batch`</b> (`int`):  Maximum number of cells in a single batch. 
  - <b>`Default`</b>:  100000. 
  - <b>`preload_on_cpu`</b> (`bool`):  If load the entire chunked data on CPU. Default: `True` 
- - <b>`preload_on_gpu`</b> (`bool`):  If load the entire chunked data on GPU, `preload_on_cpu`  
- - <b>`will be overwritten to `True` when this sets to `True`. Default`</b>:  `True`. 
+ - <b>`preload_on_gpu`</b> (`bool`):  If load the entire chunked data on GPU, `preload_on_cpu` will be overwritten to `True` when this sets to `True`. Default is `True`. 
  - <b>`save_raw_counts`</b> (`bool`):  If save `adata_X` to disk after QC filtering.  
  - <b>`Default`</b>:  False. 
  - <b>`save_norm_counts`</b> (`bool`):  If save `adata_X` data to disk after normalization.  
