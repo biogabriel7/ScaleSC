@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from memory_profiler import profile
+# from memory_profiler import profile
 # from test import get_usage
 import logging
 import tracemalloc
