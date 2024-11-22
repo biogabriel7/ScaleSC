@@ -319,7 +319,7 @@ Annotate highly variable genes.
 
 **Note:**
 
-> Only `seurat_v3` is implemented. Count data is expected for `seurat_v3`. HVGs are set to `True` in `adata.var['highly_variable']`. 
+> Only `seurat_v3` is implemented. Raw count matrix is expected as input for `seurat_v3`. HVGs are set to `True` in `adata.var['highly_variable']`. 
 >
 
 **Args:**
