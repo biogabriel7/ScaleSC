@@ -109,7 +109,7 @@ Environment Setup:
 
 ## Citation
 
-Please cite [ScaleSC](https://doi.org/10.1101/2025.01.28.635256), and [Scanpy](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-017-1382-0), [Rapids-singlecell](https://github.com/scverse/rapids_singlecell), [NSForest](https://github.com/JCVenterInstitute/NSForest) according to their instructions respectively.
+Please cite [ScaleSC](https://doi.org/10.1101/2025.01.28.635256), and [Scanpy](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-017-1382-0), [Rapids-singlecell](https://github.com/scverse/rapids_singlecell), [NSForest](https://github.com/JCVenterInstitute/NSForest), [AnnData](https://anndata.readthedocs.io/en/stable/#citation) according to their instructions respectively.
 
 
 ## API Reference
