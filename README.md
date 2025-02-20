@@ -53,8 +53,6 @@
 | Upper Limit of #cell | 5M | **~20M** | ~1M |
 | Upper Limit of #sample | <100  | **>1000** | <100 |
 
-\* Test on datasets with ~35k genes. `scalesc` only support to run Harmony on a single GPU, this memory limitation greatly limits the capability of scaling to even larger dataset. However, there would be no limitation on number of cells if you prefer not to run Harmony (QC, HVG, and PCA only).  
-
 </div>
 
 <br></br>
