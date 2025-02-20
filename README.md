@@ -49,7 +49,7 @@
 | | `scanpy` | `scalesc` | `rapids-singlecell` |
 |:----------:|:----------:|:----------:|:----------:|
 | GPU Support | ❌ | ✅ | ✅ |
-| `int32` Issue in Sparse | ❌ | ❌ | ✅ |
+| `int32` Issue in Sparse | ✅ | ✅ | ❌ |
 | Upper Limit of #cell | 5M | **~20M** | ~1M |
 | Upper Limit of #sample | <100  | **>1000** | <100 |
 
