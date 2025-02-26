@@ -309,27 +309,50 @@ def stds(x, axis=None):
     return res
 
 
-def find_cluster_pairs_to_merge(adata, x, colname, cluster, markers):
+def find_cluster_pairs_to_merge(adata, x, colname, cluster, markers, threshold=0.0):
     clusters = adata.obs[colname].unique().tolist()
     merge_pairs = []
     if len(markers)==0:
         merge_pairs = [(cluster, cluster2) for cluster2 in clusters if cluster2!=cluster]
         return merge_pairs
-
     for cluster2 in clusters:
         if cluster2==cluster: continue
         merge = True
+        # try percentage cutoff
+        m_count = 0
         for gene in markers:
             x_gene = x[adata.obs[colname]==cluster, adata.var_names==gene]
             # merge_cutoff = np.mean(adata[adata.obs[colname]==cluster, gene].X) - stds(adata[adata.obs[colname]==cluster, gene].X)
             merge_cutoff = cp.mean(x_gene) - stds(x_gene)
             # if np.mean(adata[adata.obs[colname]==cluster2, gene].X) < merge_cutoff:
             if cp.mean(x[adata.obs[colname]==cluster2, adata.var_names==gene]) < merge_cutoff:
-                merge = False
-                break
-        if merge: merge_pairs.append((cluster, cluster2))
-            
+                m_count += 1
+        if m_count / len(markers) < threshold:
+            merge_pairs.append((cluster, cluster2))
+        # if merge: merge_pairs.append((cluster, cluster2))
     return merge_pairs
+
+# def find_cluster_pairs_to_merge(adata, x, colname, cluster, markers):
+#     clusters = adata.obs[colname].unique().tolist()
+#     merge_pairs = []
+#     if len(markers)==0:
+#         merge_pairs = [(cluster, cluster2) for cluster2 in clusters if cluster2!=cluster]
+#         return merge_pairs
+
+#     for cluster2 in clusters:
+#         if cluster2==cluster: continue
+#         merge = True
+#         for gene in markers:
+#             x_gene = x[adata.obs[colname]==cluster, adata.var_names==gene]
+#             # merge_cutoff = np.mean(adata[adata.obs[colname]==cluster, gene].X) - stds(adata[adata.obs[colname]==cluster, gene].X)
+#             merge_cutoff = cp.mean(x_gene) - stds(x_gene)
+#             # if np.mean(adata[adata.obs[colname]==cluster2, gene].X) < merge_cutoff:
+#             if cp.mean(x[adata.obs[colname]==cluster2, adata.var_names==gene]) < merge_cutoff:
+#                 merge = False
+#                 break
+#         if merge: merge_pairs.append((cluster, cluster2))
+            
+#     return merge_pairs
 
 # def find_cluster_pairs_to_merge(adata, colname, cluster, markers):
 #     clusters = adata.obs[colname].unique().tolist()
@@ -350,7 +373,7 @@ def find_cluster_pairs_to_merge(adata, x, colname, cluster, markers):
             
 #     return merge_pairs
 
-def adata_cluster_merge(adata, subctype_col):
+def adata_cluster_merge(adata, subctype_col, threshold=0.0, acc_cutoff=0.3):
     """ Need a description. """
     # 1. find markers
     # 2. if no low acc, exit
@@ -368,7 +391,7 @@ def adata_cluster_merge(adata, subctype_col):
     #     if yes, final_pair.append().
     # 6. union find final pairs; then rename
     dict_acc, dict_markers = find_markers(adata, subctype_col)
-    acc_cutoff = 0.3
+    # acc_cutoff = 0.3
     low_acc_clusters = [cluster for cluster in dict_acc.keys() if dict_acc[cluster]<acc_cutoff]
     high_acc_clusters = [cluster for cluster in dict_acc.keys() if dict_acc[cluster]>=acc_cutoff]
     if len(low_acc_clusters)==0:
@@ -389,11 +412,11 @@ def adata_cluster_merge(adata, subctype_col):
     x = X_to_GPU(adata_subset.X)
 
     for cluster in low_acc_clusters:
-        tmp_pairs = find_cluster_pairs_to_merge(adata_subset, x, subctype_col, cluster, dict_markers[cluster])
+        tmp_pairs = find_cluster_pairs_to_merge(adata_subset, x, subctype_col, cluster, dict_markers[cluster], threshold=threshold)
         pairs_left_low.extend(tmp_pairs)
         
     for cluster in high_acc_clusters:
-        tmp_pairs = find_cluster_pairs_to_merge(adata_subset, x, subctype_col, cluster, dict_markers[cluster])
+        tmp_pairs = find_cluster_pairs_to_merge(adata_subset, x, subctype_col, cluster, dict_markers[cluster], threshold=threshold)
         pairs_left_high.extend(tmp_pairs)
     
     logger.debug(f'find cluster: {time.time() - start_find_cluster}')
