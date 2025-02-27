@@ -77,9 +77,9 @@ Requirements:
 
 Environment Setup:
 1. Install [**RAPIDS**](https://rapids.ai/) through Conda, \
-    `conda create -n scalesc -c rapidsai -c conda-forge -c nvidia
-    rapids=24.10 python=3.10 'cuda-version>=11.4,<=11.8'` \
-    Users have flexibility to install it according to their systems by using this [online selector](https://docs.rapids.ai/install/?_gl=1*1em94gj*_ga*OTg5MDQyNDkyLjE3MjM0OTAyNjk.*_ga_RKXFW6CM42*MTczMDIxNzIzOS4yLjAuMTczMDIxNzIzOS42MC4wLjA.#selector).
+    `conda create -n scalesc -c rapidsai -c conda-forge -c nvidia  \
+    rapids=25.02 python=3.12 'cuda-version>=12.0,<=12.8`
+    Users have flexibility to install it according to their systems by using this [online selector](https://docs.rapids.ai/install/?_gl=1*1em94gj*_ga*OTg5MDQyNDkyLjE3MjM0OTAyNjk.*_ga_RKXFW6CM42*MTczMDIxNzIzOS4yLjAuMTczMDIxNzIzOS42MC4wLjA.#selector). We highly recommand to install `**RAPIDS**>=24.12`, it solves a bug related to the leiden algorithm which results in too many clusters.
 
 2. Activate conda env, \
     `conda activate scalesc`
@@ -108,6 +108,20 @@ Environment Setup:
 ## Citation
 
 Please cite [ScaleSC](https://doi.org/10.1101/2025.01.28.635256), and [Scanpy](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-017-1382-0), [Rapids-singlecell](https://github.com/scverse/rapids_singlecell), [NSForest](https://github.com/JCVenterInstitute/NSForest), [AnnData](https://anndata.readthedocs.io/en/stable/#citation) according to their instructions respectively.
+
+    
+## Updates:
+- 2/26/2025: 
+    - adding a parameter `threshold` in function `adata_cluster_merge` to support cluster merging at various scales according to user's specification. `threshold` is between 0 and 1. set to 0 by default.
+    - updating a few more examples of cluster merging in the tutorial.
+    - future work: adding supports for loading from large `.h5ad` files.
+
+
+
+## Contact
+- [@haotianzh](mailto:haotianzh@uconn.edu)
+
+    
 
 
 ## API Reference
@@ -733,8 +747,3 @@ _This file was automatically generated via [lazydocs](https://github.com/ml-tool
 
 </div>
 
-
-## Contact
-- [@haotianzh](mailto:haotianzh@uconn.edu)
-
-    
