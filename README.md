@@ -40,7 +40,7 @@
 
 <b>What can ScaleSC do?</b>
 
-<img src="./img/scalesc_pipeline.png" alt="pipeline" width="90%" height="auto">
+<img src="./img/scalesc_pipeline.png" alt="pipeline" width="80%" height="auto">
 
 </div>
 
