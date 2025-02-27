@@ -49,7 +49,7 @@
 
 <b>ScaleSC Overview</b>
 
-<img src="./img/scalesc_overview.png" alt="pipeline" width="90%" height="auto">
+<img src="./img/scalesc_overview.png" alt="pipeline" width="100%" height="auto">
 
 </div>
 
