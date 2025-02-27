@@ -38,9 +38,18 @@
 
 <div align="center">
 
-<b>ScaleSC Outline</b>
+<b>What can ScaleSC do?</b>
 
-<img src="./img/pipeline.png" alt="time-comp" width="75%" height="auto">
+<img src="./img/scalesc_pipeline.png" alt="pipeline" width="75%" height="auto">
+
+</div>
+
+
+<div align="center">
+
+<b>ScaleSC Overview</b>
+
+<img src="./img/scalesc_overview.png" alt="pipeline" width="75%" height="auto">
 
 </div>
 
