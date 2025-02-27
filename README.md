@@ -21,6 +21,7 @@
   <a href="#highlights">Highlights</a> •
   <a href="#why-scalesc">Why ScaleSC</a> •
   <a href="#how-to-install">Installation</a> •
+  <a href="#tutorial">Tutorial</a> •
   <a href="#api-reference">API Reference</a>
 </p>
 
@@ -49,7 +50,7 @@
 
 <b>ScaleSC Overview</b>
 
-<img src="./img/scalesc_overview.png" alt="pipeline" width="100%" height="auto">
+<img src="./img/scalesc_overview.png" alt="overview" width="100%" height="auto">
 
 </div>
 
