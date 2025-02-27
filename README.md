@@ -31,7 +31,7 @@
 - Chunk the data to avoid the ***`int32` limitation*** in `cupyx.scipy.sparse` used by `rapids-singlecell` that disables the computing for moderate-size dataset (~1.3M) without Multi-GPU support. 
 - Reconcile output at each step to ***`scanpy`*** to reproduce the ***same*** results as on CPU end.
 - Improvement on ***`harmonypy`*** which allows dataset with more than ***10M cells*** and more than ***1000 samples*** to be run on a single GPU.
-- Speedup and optimize **`NSForest`** algorithm using GPU for ***better*** maker gene identification.
+- Speedup and optimize ***`NSForest`*** algorithm using GPU for ***better*** maker gene identification.
 - ***Merge*** clusters according to the gene expression of detected markers by `NSForest`.
 
 ## Why ScaleSC
