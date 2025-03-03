@@ -327,7 +327,7 @@ def find_cluster_pairs_to_merge(adata, x, colname, cluster, markers, threshold=0
             # if np.mean(adata[adata.obs[colname]==cluster2, gene].X) < merge_cutoff:
             if cp.mean(x[adata.obs[colname]==cluster2, adata.var_names==gene]) < merge_cutoff:
                 m_count += 1
-        if m_count / len(markers) < threshold:
+        if m_count / len(markers) <= threshold:
             merge_pairs.append((cluster, cluster2))
         # if merge: merge_pairs.append((cluster, cluster2))
     return merge_pairs
