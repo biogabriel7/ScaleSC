@@ -259,10 +259,10 @@ def marker_filter_sort(markers, cluster, df_sp, df_frac):
     genes.sort(key=lambda _: -df_sp[cluster][_] * df_frac[cluster][_])
     return genes    
 
-def find_markers(adata, subctype_col):
+def find_markers(adata, subctype_col, n_trees=100, n_top_genes=100, n_binary_genes=30, n_genes_eval=15):
     # 1. mynsforest -> marker genes, acc
     # 2. add S,F, then rank the markers
-    df_nsf = myNSForest(adata, cluster_header=subctype_col, n_trees=100, n_top_genes=100, n_binary_genes=30, n_genes_eval=15)
+    df_nsf = myNSForest(adata, cluster_header=subctype_col, n_trees=n_trees, n_top_genes=n_top_genes, n_binary_genes=n_binary_genes, n_genes_eval=n_genes_eval)
     dict_acc = {df_nsf.iloc[i]['clusterName']:df_nsf.iloc[i]['f_score'] for i in range(df_nsf.shape[0])}
     dict_markers = {df_nsf.iloc[i]['clusterName']:df_nsf.iloc[i]['binary_genes'] for i in range(df_nsf.shape[0])}
     markers_all = []
@@ -373,7 +373,14 @@ def find_cluster_pairs_to_merge(adata, x, colname, cluster, markers, threshold=0
             
 #     return merge_pairs
 
-def adata_cluster_merge(adata, subctype_col, threshold=0.0, acc_cutoff=0.3):
+def clusters_merge(adata, 
+                        subctype_col, 
+                        threshold=0.0, 
+                        acc_cutoff=0.3, 
+                        n_trees=100, 
+                        n_top_genes=100, 
+                        n_binary_genes=30, 
+                        n_genes_eval=15):
     """ Need a description. """
     # 1. find markers
     # 2. if no low acc, exit
@@ -390,7 +397,7 @@ def adata_cluster_merge(adata, subctype_col, threshold=0.0, acc_cutoff=0.3):
     #     for each pair in low, check if the oppostie in low union high
     #     if yes, final_pair.append().
     # 6. union find final pairs; then rename
-    dict_acc, dict_markers = find_markers(adata, subctype_col)
+    dict_acc, dict_markers = find_markers(adata, subctype_col, n_trees=n_trees, n_top_genes=n_top_genes, n_binary_genes=n_binary_genes, n_genes_eval=n_genes_eval)
     # acc_cutoff = 0.3
     low_acc_clusters = [cluster for cluster in dict_acc.keys() if dict_acc[cluster]<acc_cutoff]
     high_acc_clusters = [cluster for cluster in dict_acc.keys() if dict_acc[cluster]>=acc_cutoff]
@@ -410,7 +417,7 @@ def adata_cluster_merge(adata, subctype_col, threshold=0.0, acc_cutoff=0.3):
                 markers.append(marker)
     adata_subset = adata[:, markers]
     x = X_to_GPU(adata_subset.X)
-
+    logger.debug("starting to merge clusters")
     for cluster in low_acc_clusters:
         tmp_pairs = find_cluster_pairs_to_merge(adata_subset, x, subctype_col, cluster, dict_markers[cluster], threshold=threshold)
         pairs_left_low.extend(tmp_pairs)
@@ -429,15 +436,16 @@ def adata_cluster_merge(adata, subctype_col, threshold=0.0, acc_cutoff=0.3):
         
     my_merge_data = data2UF(list(dict_acc.keys()), final_merge_pairs)
     dict_merge = my_merge_data.union_pairs()
-    adata.obs[f'{subctype_col}_merged'] = adata.obs[subctype_col].apply(lambda x: dict_merge.get(x,x))
+    merged_col_name = f'{subctype_col}_merged_{threshold}'
+    adata.obs[merged_col_name] = adata.obs[subctype_col].apply(lambda x: dict_merge.get(x,x))
     
-    clusters = adata.obs[f'{subctype_col}_merged'].unique().tolist()
-    cluster_size = {cluster:adata.obs[adata.obs[f'{subctype_col}_merged']==cluster].shape[0] for cluster in clusters}
+    clusters = adata.obs[merged_col_name].unique().tolist()
+    cluster_size = {cluster:adata.obs[adata.obs[merged_col_name]==cluster].shape[0] for cluster in clusters}
     clusters.sort(key=lambda _: -cluster_size[_])
     clusters_rename = {clusters[i]:str(i) for i in range(len(clusters))}
     
-    adata.obs[f'{subctype_col}_merged'] = adata.obs[f'{subctype_col}_merged'].apply(lambda x: clusters_rename[x])
-    return f'{subctype_col}_merged'
+    adata.obs[merged_col_name] = adata.obs[merged_col_name].apply(lambda x: clusters_rename[x])
+    return merged_col_name
 
 # =======================================================================================================================
 # Hi Haotian, please convert this myRandomForest into a gpu version
@@ -557,7 +565,8 @@ def specificity_score(adata=None, ctype_col:str=None, glist:list=None):
     ctypes = adata.obs[ctype_col].unique().tolist()
         
     if glist and len(glist):
-        adata = adata[:, adata.var_names.isin(set(glist))].copy()
+        # adata = adata[:, adata.var_names.isin(set(glist))].copy()
+        adata = adata[:, adata.var_names.isin(set(glist))]
         if adata.shape[-1]==0:
             raise ValueError("No gene found! Pls check your gene list!")
 
@@ -584,7 +593,8 @@ def fraction_cells(adata=None, ctype_col:str=None, glist:list=None):
     ctypes = adata.obs[ctype_col].unique().tolist()
     # ctype_dict = {_: set([_]) for _ in ctypes}
     gset = set(glist)
-    adata = adata[:, adata.var_names.isin(gset)].copy()
+    # adata = adata[:, adata.var_names.isin(gset)].copy()
+    adata = adata[:, adata.var_names.isin(gset)]
     # all non-zero values to 1. because calculating fraction needs 1
     adata.X = adata.X.sign()
     # subset each cell type 
@@ -700,7 +710,7 @@ def myNSForest(adata, cluster_header, cluster_list=None, medians_header=None,
         logger.debug(str(ct) + " out of " + str(n_clusters) + ":")
 
         ## cluster in iteration
-        logger.debug("\t" + cl)
+        logger.debug("\t" + str(cl))
         
         ##=== reset parameters for this iteration!!! (for taking care of special cases) ===##
         n_binary_genes_cl = n_binary_genes
