@@ -42,7 +42,7 @@ class AnnDataBatchReader():
         self.files = {}
         self.total_size = 0
         self.first = True
-        for file in glob.glob(f'{data_dir}/*.h5ad'):
+        for file in glob.glob(f'{data_dir}/*.h5*'):
             size = os.path.getsize(file)
             self.files[file] = {'size': size}
             self.total_size += size
