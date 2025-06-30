@@ -102,7 +102,7 @@ Environment Setup:
     - Pull ScaleSC from GitHub \
         `git clone https://github.com/interactivereport/ScaleSC.git`
     - Enter the folder and install ScaleSC \
-        `cd ScaleSC` \
+        `cd scalesc` \
         `pip install .`
 5. Check env:
     - `python -c "import scalesc; print(scalesc.__version__)"` == 0.1.0
