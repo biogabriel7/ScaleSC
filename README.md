@@ -19,7 +19,7 @@
 
 <p align="center">
   <a href="#highlights">Highlights</a> •
-  <a href="#why-scalesc">Why ScaleSC</a> •
+  <a href="#why-ScaleSC">Why ScaleSC</a> •
   <a href="#how-to-install">Installation</a> •
   <a href="#tutorial">Tutorial</a> •
   <a href="#api-reference">API Reference</a>
@@ -41,7 +41,7 @@
 
 <b>What can ScaleSC do?</b>
 
-<img src="./img/scalesc_pipeline.png" alt="pipeline" width="80%" height="auto">
+<img src="./img/ScaleSC_pipeline.png" alt="pipeline" width="80%" height="auto">
 
 </div>
 
@@ -50,7 +50,7 @@
 
 <b>ScaleSC Overview</b>
 
-<img src="./img/scalesc_overview.png" alt="overview" width="100%" height="auto">
+<img src="./img/ScaleSC_overview.png" alt="overview" width="100%" height="auto">
 
 </div>
 
@@ -59,7 +59,7 @@
 <div align="center">
 <b>Overview of different packages*</b>
 
-| | `scanpy` | `scalesc` | `rapids-singlecell` |
+| | `scanpy` | `ScaleSC` | `rapids-singlecell` |
 |:----------:|:----------:|:----------:|:----------:|
 | GPU Support | ❌ | ✅ | ✅ |
 | `int32` Issue in Sparse | ✅ | ✅ | ❌ |
@@ -72,7 +72,7 @@
 
 <div align="center">
 
-<b>Time comparsion between `scanpy`(CPU) and `scalesc`(GPU) on A100(80G)</b>
+<b>Time comparsion between `scanpy`(CPU) and `ScaleSC`(GPU) on A100(80G)</b>
 
 <img src="./img/time_comp.png" alt="time-comp" width="80%" height="auto">
 
@@ -90,22 +90,22 @@ Requirements:
 
 Environment Setup:
 1. Install [**RAPIDS**](https://rapids.ai/) through Conda, \
-    `conda create -n scalesc -c rapidsai -c conda-forge -c nvidia rapids=25.02 python=3.12 'cuda-version>=12.0,<=12.8'`
+    `conda create -n ScaleSC -c rapidsai -c conda-forge -c nvidia rapids=25.02 python=3.12 'cuda-version>=12.0,<=12.8'`
     Users have the flexibility to install it according to their systems by using this [online selector](https://docs.rapids.ai/install/?_gl=1*1em94gj*_ga*OTg5MDQyNDkyLjE3MjM0OTAyNjk.*_ga_RKXFW6CM42*MTczMDIxNzIzOS4yLjAuMTczMDIxNzIzOS42MC4wLjA.#selector). We highly recommend installing `**RAPIDS**>=24.12`, it solves a bug related to the Leiden algorithm, which results in too many clusters.
 
 2. Activate conda env, \
-    `conda activate scalesc`
+    `conda activate ScaleSC`
 3. Install [**rapids-singlecell**](https://rapids-singlecell.readthedocs.io/en/latest/index.html) using pip, \
     `pip install rapids-singlecell` 
 
-4. Install scaleSC,
-    - Pull scaleSC from github \
-        `git clone https://github.com/interactivereport/scaleSC.git`
-    - Enter the folder and install scaleSC \
-        `cd scaleSC` \
+4. Install ScaleSC,
+    - Pull ScaleSC from github \
+        `git clone https://github.com/interactivereport/ScaleSC.git`
+    - Enter the folder and install ScaleSC \
+        `cd ScaleSC` \
         `pip install .`
 5. Check env:
-    - `python -c "import scalesc; print(scalesc.__version__)"` == 0.1.0
+    - `python -c "import ScaleSC; print(ScaleSC.__version__)"` == 0.1.0
     - `python -c "import cupy; print(cupy.__version__)"` >= 13.3.0
     - `python -c "import cuml; print(cuml.__version__)"` >= 24.10
     - `python -c "import cupy; print(cupy.cuda.is_available())"` = True
@@ -114,7 +114,7 @@ Environment Setup:
 </div>
 
 ## Tutorial:
-- See [this tutorial](./Tutorial_scaleSC.ipynb) for details.
+- See [this tutorial](./Tutorial_ScaleSC.ipynb) for details.
 
 
 ## Citation
@@ -143,7 +143,7 @@ Please cite [ScaleSC](https://doi.org/10.1101/2025.01.28.635256), and [Scanpy](h
 ## <kbd>class</kbd> `ScaleSC`
 ScaleSC integrated pipeline in a scanpy-like style. 
 
-It will automatically load the dataset in chunks, see `scalesc.util.AnnDataBatchReader`  for details, and all methods in this class manipulate this chunked data. 
+It will automatically load the dataset in chunks, see `ScaleSC.util.AnnDataBatchReader`  for details, and all methods in this class manipulate this chunked data. 
 
 
 
@@ -165,7 +165,7 @@ It will automatically load the dataset in chunks, see `scalesc.util.AnnDataBatch
  - <b>`output_dir`</b> (`str`):  Output folder. Default: './results'. 
  - <b>`gpus`</b> (`list`):  List of GPU ids, `[0]` is set if this is None. Default: None. 
 
-<a href="scalesc/pp.py#L37"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L37"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `__init__`
 
@@ -206,7 +206,7 @@ Note: This is always on the CPU.
 
 ---
 
-<a href="scalesc/pp.py#L100"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L100"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `calculate_qc_metrics`
 
@@ -218,7 +218,7 @@ Calculate quality control metrics.
 
 ---
 
-<a href="scalesc/pp.py#L87"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L87"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `clear`
 
@@ -230,7 +230,7 @@ Clean the memory
 
 ---
 
-<a href="scalesc/pp.py#L128"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L128"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `filter_cells`
 
@@ -251,7 +251,7 @@ Filter genes based on the number of a QC metric.
 
 ---
 
-<a href="scalesc/pp.py#L106"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L106"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `filter_genes`
 
@@ -272,7 +272,7 @@ Filter genes based on the number of a QC metric.
 
 ---
 
-<a href="scalesc/pp.py#L148"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L148"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `filter_genes_and_cells`
 
@@ -309,7 +309,7 @@ Filter genes based on the number of a QC metric.
 
 ---
 
-<a href="scalesc/pp.py#L351"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L351"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `harmony`
 
@@ -334,7 +334,7 @@ Use Harmony to integrate different experiments.
 
 ---
 
-<a href="scalesc/pp.py#L186"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L186"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `highly_variable_genes`
 
@@ -358,7 +358,7 @@ Annotate highly variable genes.
 
 ---
 
-<a href="scalesc/pp.py#L381"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L381"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `leiden`
 
@@ -377,7 +377,7 @@ Performs Leiden clustering using `rapids-singlecell`.
 
 ---
 
-<a href="scalesc/pp.py#L367"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L367"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `neighbors`
 
@@ -398,7 +398,7 @@ Compute a neighborhood graph of observations using `rapids-singlecell`.
 
 ---
 
-<a href="scalesc/pp.py#L245"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L245"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `normalize_log1p`
 
@@ -421,7 +421,7 @@ Normalize counts per cell, then log1p.
 
 ---
 
-<a href="scalesc/pp.py#L307"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L307"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `normalize_log1p_pca`
 
@@ -443,7 +443,7 @@ An alternative for calling `normalize_log1p` and `pca` together.
 
 ---
 
-<a href="scalesc/pp.py#L265"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L265"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `pca`
 
@@ -469,7 +469,7 @@ Computes PCA coordinates, loadings, and variance decomposition. Uses the impleme
 
 ---
 
-<a href="scalesc/pp.py#L404"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L404"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `save`
 
@@ -492,7 +492,7 @@ Save `adata` to disk.
 
 ---
 
-<a href="scalesc/pp.py#L417"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L417"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `savex`
 
@@ -516,7 +516,7 @@ Save `adata` to disk in chunks.
 
 ---
 
-<a href="scalesc/pp.py#L83"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L83"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `to_CPU`
 
@@ -528,7 +528,7 @@ Move all chunks to the CPU.
 
 ---
 
-<a href="scalesc/pp.py#L79"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L79"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `to_GPU`
 
@@ -540,7 +540,7 @@ Move all chunks to the GPU.
 
 ---
 
-<a href="scalesc/pp.py#L394"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/pp.py#L394"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `umap`
 
@@ -560,12 +560,12 @@ Embed the neighborhood graph using `rapids-singlecell`.
 
 ---
 
-<a href="scalesc/util.py#L30"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/util.py#L30"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ## <kbd>class</kbd> `AnnDataBatchReader`
 Chunked dataloader for extremely large single-cell dataset. Return a data chunk each time for further processing. 
 
-<a href="scalesc/util.py#L32"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/util.py#L32"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `__init__`
 
@@ -598,7 +598,7 @@ __init__(
 
 ---
 
-<a href="scalesc/util.py#L84"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/util.py#L84"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `batch_to_CPU`
 
@@ -612,7 +612,7 @@ batch_to_CPU()
 
 ---
 
-<a href="scalesc/util.py#L89"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/util.py#L89"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `batch_to_GPU`
 
@@ -626,7 +626,7 @@ batch_to_GPU()
 
 ---
 
-<a href="scalesc/util.py#L281"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/util.py#L281"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `batchify`
 
@@ -638,7 +638,7 @@ Return a data generator if `preload_on_cpu` is set as `True`.
 
 ---
 
-<a href="scalesc/util.py#L75"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/util.py#L75"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `clear`
 
@@ -652,7 +652,7 @@ clear()
 
 ---
 
-<a href="scalesc/util.py#L94"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/util.py#L94"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `get_merged_adata_with_X`
 
@@ -666,7 +666,7 @@ get_merged_adata_with_X()
 
 ---
 
-<a href="scalesc/util.py#L205"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/util.py#L205"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `gpu_wrapper`
 
@@ -680,7 +680,7 @@ gpu_wrapper(generator)
 
 ---
 
-<a href="scalesc/util.py#L210"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/util.py#L210"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `read`
 
@@ -694,7 +694,7 @@ read(fname)
 
 ---
 
-<a href="scalesc/util.py#L129"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/util.py#L129"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `set_cells_filter`
 
@@ -706,7 +706,7 @@ Update the cells filter and apply it to data chunks if `update` is set to `True`
 
 ---
 
-<a href="scalesc/util.py#L155"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/util.py#L155"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `set_genes_filter`
 
@@ -724,7 +724,7 @@ Update genes filter and apply on data chunks if `update` set to True, otherwise,
 
 ---
 
-<a href="scalesc/util.py#L191"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/util.py#L191"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `update_by_cells_filter`
 
@@ -738,7 +738,7 @@ update_by_cells_filter(filter)
 
 ---
 
-<a href="scalesc/util.py#L198"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
+<a href="ScaleSC/util.py#L198"><img align="right" style="float:right;" src="https://img.shields.io/badge/-source-cccccc?style=flat-square"></a>
 
 ### <kbd>method</kbd> `update_by_genes_filter`
 
