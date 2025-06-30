@@ -99,13 +99,13 @@ Environment Setup:
     `pip install rapids-singlecell` 
 
 4. Install ScaleSC,
-    - Pull ScaleSC from github \
+    - Pull ScaleSC from GitHub \
         `git clone https://github.com/interactivereport/ScaleSC.git`
     - Enter the folder and install ScaleSC \
         `cd ScaleSC` \
         `pip install .`
 5. Check env:
-    - `python -c "import ScaleSC; print(ScaleSC.__version__)"` == 0.1.0
+    - `python -c "import scalesc; print(scalesc.__version__)"` == 0.1.0
     - `python -c "import cupy; print(cupy.__version__)"` >= 13.3.0
     - `python -c "import cuml; print(cuml.__version__)"` >= 24.10
     - `python -c "import cupy; print(cupy.cuda.is_available())"` = True
