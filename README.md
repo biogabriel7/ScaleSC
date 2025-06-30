@@ -143,7 +143,7 @@ Please cite [ScaleSC](https://doi.org/10.1101/2025.01.28.635256), and [Scanpy](h
 ## <kbd>class</kbd> `ScaleSC`
 ScaleSC integrated pipeline in a scanpy-like style. 
 
-It will automatically load the dataset in chunks, see `ScaleSC.util.AnnDataBatchReader`  for details, and all methods in this class manipulate this chunked data. 
+It will automatically load the dataset in chunks, see `scalesc.util.AnnDataBatchReader`  for details, and all methods in this class manipulate this chunked data. 
 
 
 
