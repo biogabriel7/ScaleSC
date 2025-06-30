@@ -114,7 +114,7 @@ Environment Setup:
 </div>
 
 ## Tutorial:
-- See [this tutorial](./Tutorial_ScaleSC.ipynb) for details.
+- See [this tutorial](./Tutorial_scaleSC.ipynb) for details.
 
 
 ## Citation
