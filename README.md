@@ -41,7 +41,7 @@
 
 <b>What can ScaleSC do?</b>
 
-<img src="./img/ScaleSC_pipeline.png" alt="pipeline" width="80%" height="auto">
+<img src="./img/scalesc_pipeline.png" alt="pipeline" width="80%" height="auto">
 
 </div>
 
@@ -50,7 +50,7 @@
 
 <b>ScaleSC Overview</b>
 
-<img src="./img/ScaleSC_overview.png" alt="overview" width="100%" height="auto">
+<img src="./img/scalesc_overview.png" alt="overview" width="100%" height="auto">
 
 </div>
 
@@ -59,7 +59,7 @@
 <div align="center">
 <b>Overview of different packages*</b>
 
-| | `scanpy` | `ScaleSC` | `rapids-singlecell` |
+| | `Scanpy` | `ScaleSC` | `Rapids-singlecell` |
 |:----------:|:----------:|:----------:|:----------:|
 | GPU Support | ❌ | ✅ | ✅ |
 | `int32` Issue in Sparse | ✅ | ✅ | ❌ |
