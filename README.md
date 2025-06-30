@@ -4,7 +4,7 @@
 </h1>
 
 <p align="center">
-    <strong>A GPU-accelerated tool for large scale scRNA-seq pipeline.</strong>
+    <strong>A GPU-accelerated tool for large-scale scRNA-seq pipeline.</strong>
 </p>
 
 <!-- <p align="center">
@@ -29,7 +29,7 @@
 
 - Fast scRNA-seq pipeline including QC, Normalization, Batch-effect Removal, Dimension Reduction in a ***similar syntax*** as `scanpy` and `rapids-singlecell`.
 - Scale to dataset with more than ***10M cells*** on a ***single*** GPU. (A100 80G)
-- Chunk the data to avoid the ***`int32` limitation*** in `cupyx.scipy.sparse` used by `rapids-singlecell` that disables the computing for moderate-size dataset (~1.3M) without Multi-GPU support. 
+- Chunk the data to avoid the ***`int32` limitation*** in `cupyx.scipy.sparse` used by `rapids-singlecell` that disables the computing for moderate-size datasets (~1.3M) without Multi-GPU support. 
 - Reconcile output at each step to ***`scanpy`*** to reproduce the ***same*** results as on CPU end.
 - Improvement on ***`harmonypy`*** which allows dataset with more than ***10M cells*** and more than ***1000 samples*** to be run on a single GPU.
 - Speedup and optimize ***`NSForest`*** algorithm using GPU for ***better*** maker gene identification.
@@ -85,14 +85,13 @@
 Requirements:
 - [**RAPIDS**](https://rapids.ai/) from Nvidia
 - [**rapids-singlecell**](https://rapids-singlecell.readthedocs.io/en/latest/index.html), an alternative of *scanpy* that employs GPU for acceleration. 
-- [**Conda**](https://docs.conda.io/projects/conda/en/latest/index.html), version >=22.11 is strongly encoruaged, because *conda-libmamba-solver* is set as default, which significant speeds up solving dependencies.  
+- [**Conda**](https://docs.conda.io/projects/conda/en/latest/index.html), version >=22.11 is strongly encouraged, because *conda-libmamba-solver* is set as default, which significantly speeds up solving dependencies.  
 - [**pip**](), a python package installer.
 
 Environment Setup:
 1. Install [**RAPIDS**](https://rapids.ai/) through Conda, \
-    `conda create -n scalesc -c rapidsai -c conda-forge -c nvidia  \
-    rapids=25.02 python=3.12 'cuda-version>=12.0,<=12.8`
-    Users have flexibility to install it according to their systems by using this [online selector](https://docs.rapids.ai/install/?_gl=1*1em94gj*_ga*OTg5MDQyNDkyLjE3MjM0OTAyNjk.*_ga_RKXFW6CM42*MTczMDIxNzIzOS4yLjAuMTczMDIxNzIzOS42MC4wLjA.#selector). We highly recommand to install `**RAPIDS**>=24.12`, it solves a bug related to the leiden algorithm which results in too many clusters.
+    `conda create -n scalesc -c rapidsai -c conda-forge -c nvidia rapids=25.02 python=3.12 'cuda-version>=12.0,<=12.8'`
+    Users have the flexibility to install it according to their systems by using this [online selector](https://docs.rapids.ai/install/?_gl=1*1em94gj*_ga*OTg5MDQyNDkyLjE3MjM0OTAyNjk.*_ga_RKXFW6CM42*MTczMDIxNzIzOS4yLjAuMTczMDIxNzIzOS42MC4wLjA.#selector). We highly recommend installing `**RAPIDS**>=24.12`, it solves a bug related to the Leiden algorithm, which results in too many clusters.
 
 2. Activate conda env, \
     `conda activate scalesc`
@@ -100,12 +99,12 @@ Environment Setup:
     `pip install rapids-singlecell` 
 
 4. Install scaleSC,
-    - pull scaleSC from github \
+    - Pull scaleSC from github \
         `git clone https://github.com/interactivereport/scaleSC.git`
-    - enter the folder and install scaleSC \
+    - Enter the folder and install scaleSC \
         `cd scaleSC` \
         `pip install .`
-5. check env:
+5. Check env:
     - `python -c "import scalesc; print(scalesc.__version__)"` == 0.1.0
     - `python -c "import cupy; print(cupy.__version__)"` >= 13.3.0
     - `python -c "import cuml; print(cuml.__version__)"` >= 24.10
@@ -125,9 +124,9 @@ Please cite [ScaleSC](https://doi.org/10.1101/2025.01.28.635256), and [Scanpy](h
     
 ## Updates:
 - 2/26/2025: 
-    - adding a parameter `threshold` in function `adata_cluster_merge` to support cluster merging at various scales according to user's specification. `threshold` is between 0 and 1. set to 0 by default.
-    - updating a few more examples of cluster merging in the tutorial.
-    - future work: adding supports for loading from large `.h5ad` files.
+    - adding a parameter `threshold` in function `adata_cluster_merge` to support cluster merging at various scales according to the user's specification. `threshold` is between 0 and 1. Set to 0 by default.
+    - Updating a few more examples of cluster merging in the tutorial.
+    - future work: adding support for loading from large `.h5ad` files.
 
 
 
@@ -144,7 +143,7 @@ Please cite [ScaleSC](https://doi.org/10.1101/2025.01.28.635256), and [Scanpy](h
 ## <kbd>class</kbd> `ScaleSC`
 ScaleSC integrated pipeline in a scanpy-like style. 
 
-It will automatcially load dataset in chunks, see `scalesc.util.AnnDataBatchReader`  for details, and all methods in this class manipulate this chunked data. 
+It will automatically load the dataset in chunks, see `scalesc.util.AnnDataBatchReader`  for details, and all methods in this class manipulate this chunked data. 
 
 
 
@@ -156,7 +155,7 @@ It will automatcially load dataset in chunks, see `scalesc.util.AnnDataBatchRead
  - <b>`max_cell_batch`</b> (`int`):  Maximum number of cells in a single batch. 
  - <b>`Default`</b>:  100000. 
  - <b>`preload_on_cpu`</b> (`bool`):  If load the entire chunked data on CPU. Default: `True` 
- - <b>`preload_on_gpu`</b> (`bool`):  If load the entire chunked data on GPU, `preload_on_cpu` will be overwritten to `True` when this sets to `True`. Default is `True`. 
+ - <b>`preload_on_gpu`</b> (`bool`):  If the entire chunked data is on GPU, `preload_on_cpu` will be overwritten to `True` when this is set to `True`. The default is `True`. 
  - <b>`save_raw_counts`</b> (`bool`):  If save `adata_X` to disk after QC filtering.  
  - <b>`Default`</b>:  False. 
  - <b>`save_norm_counts`</b> (`bool`):  If save `adata_X` data to disk after normalization.  
@@ -193,15 +192,15 @@ __init__(
 
 #### <kbd>property</kbd> adata
 
-`AnnData`: An AnnData object that used to store all intermediate results  without the count matrix.  
+`AnnData`: An AnnData object that is used to store all intermediate results  without the count matrix.  
 
-Note: This is always on CPU. 
+Note: This is always on the CPU. 
 
 ---
 
 #### <kbd>property</kbd> adata_X
 
-`AnnData`: An `AnnData` object that used to store all intermediate results  including the count matrix. Internally, all chunks should be merged on CPU to avoid  high GPU consumption, make sure to invoke `to_CPU()` before calling this object. 
+`AnnData`: An `AnnData` object that is used to store all intermediate results,  including the count matrix. Internally, all chunks should be merged on CPU to avoid  high GPU consumption; make sure to invoke `to_CPU()` before calling this object. 
 
 
 
@@ -239,7 +238,7 @@ Clean the memory
 filter_cells(min_count=0, max_count=None, qc_var='n_genes_by_counts', qc=False)
 ```
 
-Filter genes based on number of a QC metric. 
+Filter genes based on the number of a QC metric. 
 
 
 
@@ -247,7 +246,7 @@ Filter genes based on number of a QC metric.
  
  - <b>`min_count`</b> (`int`):  Minimum number of counts required for a cell to pass filtering. 
  - <b>`max_count`</b> (`int`):  Maximum number of counts required for a cell to pass filtering. 
- - <b>`qc_var`</b> (`str`='n_genes_by_counts'):  Feature in QC metrics that used to filter cells. 
+ - <b>`qc_var`</b> (`str`='n_genes_by_counts'):  Feature in QC metrics that is used to filter cells. 
  - <b>`qc`</b> (`bool`=`False`):  Call `calculate_qc_metrics` before filtering. 
 
 ---
@@ -260,7 +259,7 @@ Filter genes based on number of a QC metric.
 filter_genes(min_count=0, max_count=None, qc_var='n_cells_by_counts', qc=False)
 ```
 
-Filter genes based on number of a QC metric. 
+Filter genes based on the number of a QC metric. 
 
 
 
@@ -268,7 +267,7 @@ Filter genes based on number of a QC metric.
  
  - <b>`min_count`</b> (`int`):  Minimum number of counts required for a gene to pass filtering. 
  - <b>`max_count`</b> (`int`):  Maximum number of counts required for a gene to pass filtering. 
- - <b>`qc_var`</b> (`str`='n_cells_by_counts'):  Feature in QC metrics that used to filter genes. 
+ - <b>`qc_var`</b> (`str`='n_cells_by_counts'):  Feature in QC metrics that is used to filter genes. 
  - <b>`qc`</b> (`bool`=`False`):  Call `calculate_qc_metrics` before filtering. 
 
 ---
@@ -289,23 +288,23 @@ filter_genes_and_cells(
 )
 ```
 
-Filter genes based on number of a QC metric. 
+Filter genes based on the number of a QC metric. 
 
 
 
 **Note:**
 
-> This is an efficient way to perform a regular filtering on genes and cells without repeatedly iterating over chunks. 
+> This is an efficient way to perform regular filtering on genes and cells without repeatedly iterating over chunks. 
 >
 
 **Args:**
  
  - <b>`min_counts_per_gene`</b> (`int`):  Minimum number of counts required for a gene to pass filtering. 
  - <b>`max_counts_per_gene`</b> (`int`):  Maximum number of counts required for a gene to pass filtering. 
- - <b>`qc_var_gene`</b> (`str`='n_cells_by_counts'):  Feature in QC metrics that used to filter genes. 
+ - <b>`qc_var_gene`</b> (`str`='n_cells_by_counts'):  Feature in QC metrics that is used to filter genes. 
  - <b>`min_counts_per_cell`</b> (`int`):  Minimum number of counts required for a cell to pass filtering. 
  - <b>`max_counts_per_cell`</b> (`int`):  Maximum number of counts required for a cell to pass filtering. 
- - <b>`qc_var_cell`</b> (`str`='n_genes_by_counts'):  Feature in QC metrics that used to filter cells. 
+ - <b>`qc_var_cell`</b> (`str`='n_genes_by_counts'):  Feature in QC metrics that is used to filter cells. 
  - <b>`qc`</b> (`bool`=`False`):  Call `calculate_qc_metrics` before filtering. 
 
 ---
@@ -349,7 +348,7 @@ Annotate highly variable genes.
 
 **Note:**
 
-> Only `seurat_v3` is implemented. Raw count matrix is expected as input for `seurat_v3`. HVGs are set to `True` in `adata.var['highly_variable']`. 
+> Only `seurat_v3` is implemented. The raw count matrix is expected as input for `seurat_v3`. HVGs are set to `True` in `adata.var['highly_variable']`. 
 >
 
 **Args:**
@@ -407,7 +406,7 @@ Compute a neighborhood graph of observations using `rapids-singlecell`.
 normalize_log1p(target_sum=10000.0)
 ```
 
-Normalize counts per cell then log1p. 
+Normalize counts per cell, then log1p. 
 
 
 
@@ -454,7 +453,7 @@ pca(n_components=50, hvg_var='highly_variable')
 
 Principal component analysis. 
 
-Computes PCA coordinates, loadings and variance decomposition. Uses the implementation of scikit-learn. 
+Computes PCA coordinates, loadings, and variance decomposition. Uses the implementation of scikit-learn. 
 
 
 
@@ -525,7 +524,7 @@ Save `adata` to disk in chunks.
 to_CPU()
 ```
 
-Move all chunks to CPU. 
+Move all chunks to the CPU. 
 
 ---
 
@@ -537,7 +536,7 @@ Move all chunks to CPU.
 to_GPU()
 ```
 
-Move all chunks to GPU. 
+Move all chunks to the GPU. 
 
 ---
 
@@ -703,7 +702,7 @@ read(fname)
 set_cells_filter(filter, update=True)
 ```
 
-Update cells filter and applied on data chunks if `update` set to `True`, otherwise, update filter only. 
+Update the cells filter and apply it to data chunks if `update` is set to `True`, otherwise, update the filter only. 
 
 ---
 
@@ -715,13 +714,13 @@ Update cells filter and applied on data chunks if `update` set to `True`, otherw
 set_genes_filter(filter, update=True)
 ```
 
-Update genes filter and applied on data chunks if `update` set to True, otherwise, update filter only.  
+Update genes filter and apply on data chunks if `update` set to True, otherwise, update filter only.  
 
 
 
 **Note:**
 
-> Genes filter can be set sequentially, a new filter should be always compatible with the previous filtered data. 
+> Genes filter can be set sequentially; a new filter should always be compatible with the previously filtered data. 
 
 ---
 
