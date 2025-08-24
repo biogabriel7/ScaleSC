@@ -22,4 +22,4 @@ dependencies = [
 "Homepage" = "https://github.com/interactivereport/scaleSC/tree/main"  
 
 [tool.setuptools]
-packages = ["scalesc"]
+packages = ["src/scalesc"]
