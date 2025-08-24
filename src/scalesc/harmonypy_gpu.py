@@ -379,7 +379,7 @@ class Harmony:
                 break
         if verbose and not converged:
             logger.info("Harmony: Stopped before convergence")
-        return 0
+        return
 
     def cluster(self):
         get_usage('--cluster')
@@ -405,7 +405,7 @@ class Harmony:
         self.kmeans_rounds.append(i)
         self.objective_harmony.append(self.objective_kmeans[-1])
         get_usage('--end cluster')
-        return 0
+        return
 
     def update_R(self):
         get_usage('update R')
@@ -450,7 +450,7 @@ class Harmony:
             # self.O += cp.dot(self.R[:, b], self.Phi[:, b].T)
             self.O += self.R[:, b] @ self.Phi[:, b].T
         get_usage('end update R')
-        return 0
+        return
 
     def check_convergence(self, i_type):
         obj_old = 0.0

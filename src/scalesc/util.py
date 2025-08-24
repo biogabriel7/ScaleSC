@@ -639,7 +639,7 @@ def harmony(
     X = adata.obsm[basis].astype(float)
     res = harmonypy_gpu.run_harmony(X, adata.obs, key, init_seeds=init_seeds, n_init=n_init, max_iter_harmony=max_iter_harmony, dtype=dtype)
     adata.obsm[adjusted_basis] = res.result()
-    return 0
+    return
 
 
 def correct_leiden(adata):
