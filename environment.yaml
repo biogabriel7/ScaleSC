@@ -1,0 +1,16 @@
+name: scalesc
+channels:
+  - rapidsai
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python>=3.10
+  - rapids=25.08
+  - scanpy
+  - pip
+  - setuptools>=75
+  - wheel
+  - pip:
+      - rapids-singlecell==0.13.2
+      - -e .
